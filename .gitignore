@@ -1,0 +1,4 @@
+lokaal/.env
+.env
+node_modules/
+*.png

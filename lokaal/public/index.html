@@ -1,0 +1,1953 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>
+:root{color-scheme:light dark; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0; font:14px/1.5 system-ui,-apple-system,sans-serif}
+img{max-width:100%} [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<title>Prospect Kompas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
+<style>
+:root{
+  --bg:#EDF0EF; --surface:#FFFFFF; --surface-2:#F5F8F7; --surface-3:#E6ECEA;
+  --ink:#121D21; --ink-2:#465A5F; --ink-3:#798A8D;
+  --line:#D7E0DD; --line-2:#C0CCC9;
+  --accent:#0B5A67; --accent-2:#08434D; --accent-soft:#DBEAED; --on-accent:#FFFFFF;
+  --red:#A63A2B; --red-soft:#F6E2DE;
+  --amber:#8F6A0E; --amber-soft:#F5EDD8;
+  --green:#2F6B45; --green-soft:#DFEDE4;
+  --shadow:0 1px 2px rgba(18,29,33,.06), 0 10px 26px -14px rgba(18,29,33,.22);
+  --radius:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0C1417; --surface:#141F22; --surface-2:#1A2629; --surface-3:#223034;
+    --ink:#E7EEEC; --ink-2:#A1B1B4; --ink-3:#76868A;
+    --line:#27373A; --line-2:#35474B;
+    --accent:#58B9C8; --accent-2:#8AD2DD; --accent-soft:#10333A; --on-accent:#06262C;
+    --red:#E68877; --red-soft:#381F1A;
+    --amber:#D6AC57; --amber-soft:#31270F;
+    --green:#6CBE89; --green-soft:#14301E;
+    --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -14px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0C1417; --surface:#141F22; --surface-2:#1A2629; --surface-3:#223034;
+  --ink:#E7EEEC; --ink-2:#A1B1B4; --ink-3:#76868A;
+  --line:#27373A; --line-2:#35474B;
+  --accent:#58B9C8; --accent-2:#8AD2DD; --accent-soft:#10333A; --on-accent:#06262C;
+  --red:#E68877; --red-soft:#381F1A;
+  --amber:#D6AC57; --amber-soft:#31270F;
+  --green:#6CBE89; --green-soft:#14301E;
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -14px rgba(0,0,0,.7);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{margin:0; text-wrap:balance; font-weight:600; letter-spacing:-.01em}
+p{margin:0}
+button{font:inherit; color:inherit; cursor:pointer; background:none; border:none}
+input,textarea,select{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:4px}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+
+/* ---------- shell ---------- */
+.topbar{
+  position:sticky; top:env(safe-area-inset-top,0px); z-index:40;
+  background:color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.topbar-in{
+  max-width:1180px; margin:0 auto; padding:10px 20px;
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.brand{display:flex; align-items:center; gap:9px; cursor:pointer}
+.brand-mark{
+  width:26px; height:26px; border-radius:50%; flex:none;
+  border:1.5px solid var(--accent); position:relative;
+  background:var(--accent-soft);
+}
+.brand-mark::after{
+  content:""; position:absolute; inset:0; margin:auto;
+  width:2px; height:13px; background:var(--accent);
+  transform:rotate(38deg); border-radius:2px;
+}
+.brand-name{font-weight:600; letter-spacing:-.02em; font-size:15.5px}
+.brand-sub{font-size:11px; color:var(--ink-3); letter-spacing:.06em; text-transform:uppercase; font-weight:500}
+.topbar-spacer{flex:1}
+.btn{
+  border:1px solid var(--line-2); background:var(--surface); color:var(--ink);
+  padding:7px 13px; border-radius:8px; font-size:13.5px; font-weight:500;
+  display:inline-flex; align-items:center; gap:7px; transition:background .12s, border-color .12s;
+}
+.btn:hover{background:var(--surface-2); border-color:var(--ink-3)}
+.btn-primary{background:var(--accent); color:var(--on-accent); border-color:var(--accent)}
+.btn-primary:hover{background:var(--accent-2); border-color:var(--accent-2)}
+.btn-primary[disabled]{opacity:.45; cursor:not-allowed}
+.btn-sm{padding:5px 10px; font-size:12.5px}
+.count-chip{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+  background:var(--surface-3); border-radius:5px; padding:1px 5px;
+}
+.wrap{max-width:1180px; margin:0 auto; padding-inline:20px; padding-block:26px 64px}
+
+/* ---------- search ---------- */
+.search-shell{position:relative}
+.search-box{
+  display:flex; align-items:center; gap:11px;
+  background:var(--surface); border:1px solid var(--line-2);
+  border-radius:12px; padding:13px 16px; box-shadow:var(--shadow);
+}
+.search-box:focus-within{border-color:var(--accent)}
+.search-box svg{flex:none; color:var(--ink-3)}
+.search-box input{
+  flex:1; border:none; background:none; outline:none; font-size:16px; min-width:0;
+}
+.search-box input::placeholder{color:var(--ink-3)}
+.results{
+  position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:30;
+  background:var(--surface); border:1px solid var(--line-2); border-radius:12px;
+  box-shadow:var(--shadow); overflow:hidden; max-height:340px; overflow-y:auto;
+}
+.result{
+  display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+  padding:10px 15px; border-bottom:1px solid var(--line);
+}
+.result:last-child{border-bottom:none}
+.result:hover,.result:focus-visible{background:var(--surface-2)}
+.result-main{flex:1; min-width:0}
+.result-name{font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.result-meta{font-size:12.5px; color:var(--ink-3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.result.stub .result-name{color:var(--ink-2)}
+.empty-res{padding:14px 15px; color:var(--ink-3); font-size:13.5px}
+
+/* ---------- status ---------- */
+.dot{width:9px; height:9px; border-radius:50%; flex:none; display:inline-block}
+.s-wit .dot,.dot.s-wit{background:var(--red)}
+.s-deels .dot,.dot.s-deels{background:var(--amber)}
+.s-klant .dot,.dot.s-klant{background:var(--green)}
+.pill{
+  display:inline-flex; align-items:center; gap:6px; flex:none;
+  font-size:12px; font-weight:600; padding:3px 9px 3px 7px; border-radius:20px;
+  letter-spacing:.005em; white-space:nowrap;
+}
+.pill.s-wit{background:var(--red-soft); color:var(--red)}
+.pill.s-deels{background:var(--amber-soft); color:var(--amber)}
+.pill.s-klant{background:var(--green-soft); color:var(--green)}
+
+/* ---------- cards / sections ---------- */
+.card{background:var(--surface); border:1px solid var(--line); border-radius:var(--radius)}
+.sec{margin-top:30px}
+.sec-head{display:flex; align-items:baseline; gap:12px; margin-bottom:12px; flex-wrap:wrap}
+.sec-title{font-size:12px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-2)}
+.src{
+  font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--ink-3);
+  border:1px solid var(--line); border-radius:4px; padding:1px 5px; white-space:nowrap;
+}
+.src.live{color:var(--accent); border-color:color-mix(in srgb, var(--accent) 40%, transparent)}
+
+/* ---------- start view ---------- */
+.lede{max-width:60ch; color:var(--ink-2); margin-top:10px; font-size:15.5px}
+.kicker{font-size:12px; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); font-weight:600}
+.h-start{font-family:"IBM Plex Serif",Georgia,serif; font-size:clamp(28px,4.6vw,40px); font-weight:600; letter-spacing:-.025em; margin-top:8px}
+.grid-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:14px}
+.pcard{
+  text-align:left; padding:17px 17px 15px; display:flex; flex-direction:column; gap:11px;
+  transition:border-color .12s, transform .12s;
+}
+.pcard:hover{border-color:var(--accent); transform:translateY(-1px)}
+.pcard-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+.pcard-name{font-family:"IBM Plex Serif",Georgia,serif; font-size:18px; font-weight:600; letter-spacing:-.015em; line-height:1.25}
+.pcard-meta{font-size:12.5px; color:var(--ink-3)}
+.pcard-why{font-size:13.5px; color:var(--ink-2); border-top:1px solid var(--line); padding-top:10px; margin-top:auto}
+.pcard-why b{color:var(--ink); font-weight:600}
+
+/* ---------- dossier ---------- */
+.crumbs{display:flex; align-items:center; gap:7px; flex-wrap:wrap; font-size:13px; color:var(--ink-3); margin-bottom:14px}
+.crumbs button{color:var(--accent); font-weight:500}
+.crumbs button:hover{text-decoration:underline}
+.dos-head{padding:20px 22px; display:flex; gap:22px; flex-wrap:wrap; align-items:flex-start}
+.dos-head-main{flex:1 1 300px; min-width:0}
+.dos-name{font-family:"IBM Plex Serif",Georgia,serif; font-size:clamp(23px,3.4vw,31px); font-weight:600; letter-spacing:-.025em; line-height:1.15}
+.dos-facts{display:flex; gap:7px 18px; flex-wrap:wrap; margin-top:11px; font-size:13px; color:var(--ink-2)}
+.dos-facts span b{color:var(--ink-3); font-weight:500}
+.dos-actions{display:flex; gap:9px; flex-wrap:wrap}
+
+.two-col{display:grid; grid-template-columns:minmax(0,1.62fr) minmax(0,1fr); gap:20px; margin-top:20px; align-items:start}
+@media (max-width:860px){ .two-col{grid-template-columns:1fr} }
+
+/* positie */
+.pos{padding:17px 18px}
+.pos-row{display:flex; justify-content:space-between; align-items:baseline; gap:12px; padding:9px 0; border-bottom:1px dashed var(--line)}
+.pos-row:last-of-type{border-bottom:none}
+.pos-k{font-size:13px; color:var(--ink-2)}
+.pos-v{font-size:15px; font-weight:600}
+.pos-v.big{font-size:22px; letter-spacing:-.02em}
+
+.bar{display:flex; gap:2px; height:15px; margin:14px 0 10px}
+.bar-seg{border-radius:3px; display:flex; align-items:center; justify-content:center; min-width:3px; overflow:hidden}
+.bar-seg span{font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; color:var(--surface)}
+.seg-wit{background:var(--red)} .seg-deels{background:var(--amber)} .seg-klant{background:var(--green)}
+.legend{display:flex; gap:7px 16px; flex-wrap:wrap; font-size:12px; color:var(--ink-2)}
+.legend span{display:inline-flex; align-items:center; gap:6px}
+
+/* tree */
+.tree{padding:8px 16px 16px}
+.tree ul{list-style:none; margin:0; padding:0 0 0 17px; border-left:1px solid var(--line-2)}
+.tree > ul{padding-left:0; border-left:none}
+.tree li{position:relative; padding-left:0}
+.tree ul li::before{
+  content:""; position:absolute; left:-17px; top:19px; width:13px; height:1px; background:var(--line-2);
+}
+.node{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  padding:8px 9px; border-radius:7px; margin-top:2px; border:1px solid transparent;
+}
+.node:hover{background:var(--surface-2); border-color:var(--line)}
+.node.here{background:var(--accent-soft); border-color:color-mix(in srgb, var(--accent) 35%, transparent)}
+.node-name{font-weight:500; font-size:14px}
+.node-meta{font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.node-mid{flex:1; min-width:0}
+.node-arr{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--green); font-weight:500; flex:none}
+.twist{
+  flex:none; width:17px; height:17px; border-radius:4px; display:grid; place-items:center;
+  color:var(--ink-3); font-size:10px; border:1px solid var(--line);
+}
+.twist.leaf{border-color:transparent; color:transparent}
+
+/* signalen */
+.sig{padding:6px 18px 16px}
+.sig-item{display:flex; gap:14px; padding:13px 0; border-bottom:1px solid var(--line)}
+.sig-item:last-child{border-bottom:none}
+.sig-date{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3);
+  flex:none; width:62px; padding-top:2px;
+}
+.sig-body{flex:1; min-width:0}
+.sig-tag{
+  display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--accent); margin-bottom:3px;
+}
+.sig-text{font-size:14px; line-height:1.45}
+.sig-src{font-size:11.5px; color:var(--ink-3); margin-top:4px; font-family:"IBM Plex Mono",monospace}
+.sig-item.hot .sig-tag{color:var(--red)}
+
+/* dmu */
+.dmu-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(252px,1fr)); gap:12px}
+.person{
+  padding:14px 15px; display:flex; flex-direction:column; gap:9px; text-align:left;
+  border:1px solid var(--line); border-radius:var(--radius); background:var(--surface);
+  position:relative; transition:border-color .12s;
+}
+.person.sel{border-color:var(--accent); box-shadow:0 0 0 1px var(--accent) inset}
+.person-top{display:flex; gap:11px; align-items:flex-start}
+.avatar{
+  width:36px; height:36px; border-radius:9px; flex:none; display:grid; place-items:center;
+  font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600;
+  background:var(--surface-3); color:var(--ink-2);
+}
+.person-name{font-weight:600; font-size:14.5px; line-height:1.25}
+.person-rol{font-size:12.5px; color:var(--ink-2); margin-top:1px}
+.tag{
+  display:inline-block; font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+  padding:2px 7px; border-radius:4px; background:var(--surface-3); color:var(--ink-2);
+}
+.tag.beslisser{background:var(--accent-soft); color:var(--accent)}
+.tag.poortwachter{background:var(--amber-soft); color:var(--amber)}
+.person-contact{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); line-height:1.7; word-break:break-all}
+.person-foot{display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid var(--line); padding-top:9px; margin-top:auto}
+.status-line{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink-3)}
+.status-line .dot{background:var(--ink-3)}
+.status-line.sent .dot{background:var(--green)}
+.status-line.sent{color:var(--green)}
+.pick{display:inline-flex; align-items:center; gap:7px; font-size:12.5px; color:var(--ink-2); cursor:pointer; user-select:none}
+.pick input{accent-color:var(--accent); width:15px; height:15px; margin:0}
+
+.dmu-bar{
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius);
+  padding:11px 14px; margin-bottom:13px;
+}
+.dmu-bar p{font-size:13px; color:var(--ink-2); flex:1; min-width:180px}
+
+.todo{margin-top:13px; padding:12px 15px; background:var(--accent-soft); border-radius:var(--radius); font-size:13px}
+.todo h4{font-size:12px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); margin-bottom:7px}
+.todo li{margin-left:17px}
+
+/* ---------- overlay ---------- */
+.overlay{
+  position:fixed; inset:0; z-index:60; background:color-mix(in srgb, var(--ink) 45%, transparent);
+  display:flex; align-items:flex-start; justify-content:center; overflow-y:auto;
+  padding:20px; padding-top:calc(20px + env(safe-area-inset-top,0px));
+}
+.sheet{
+  background:var(--surface); border:1px solid var(--line-2); border-radius:14px;
+  width:100%; max-width:980px; box-shadow:var(--shadow); overflow:hidden; margin-bottom:40px;
+}
+.sheet-head{
+  display:flex; align-items:center; gap:14px; padding:15px 20px; border-bottom:1px solid var(--line);
+  background:var(--surface-2);
+}
+.sheet-head h2{font-size:16px}
+.sheet-head p{font-size:12.5px; color:var(--ink-3)}
+.x{width:30px; height:30px; border-radius:7px; display:grid; place-items:center; color:var(--ink-2); border:1px solid var(--line)}
+.x:hover{background:var(--surface-3)}
+
+.studio{display:grid; grid-template-columns:232px minmax(0,1fr)}
+@media (max-width:760px){ .studio{grid-template-columns:1fr} }
+.studio-side{padding:17px 18px; border-right:1px solid var(--line); background:var(--surface-2)}
+@media (max-width:760px){ .studio-side{border-right:none; border-bottom:1px solid var(--line)} }
+.side-lab{font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:9px}
+.angle{display:flex; flex-direction:column; gap:5px; margin-bottom:20px}
+.angle button{
+  text-align:left; padding:8px 11px; border-radius:7px; font-size:13.5px;
+  border:1px solid var(--line); background:var(--surface);
+}
+.angle button:hover{border-color:var(--ink-3)}
+.angle button.on{background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:500}
+.field{display:block; margin-bottom:16px}
+.field span{display:block; font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--ink-3); margin-bottom:6px}
+.field input{
+  width:100%; padding:8px 10px; border-radius:7px; border:1px solid var(--line-2);
+  background:var(--surface); font-size:13.5px;
+}
+.studio-main{padding:17px 20px 20px; min-width:0}
+.tabs{display:flex; gap:5px; flex-wrap:wrap; margin-bottom:14px}
+.tab{
+  padding:7px 12px; border-radius:7px 7px 0 0; font-size:13px; border:1px solid var(--line);
+  border-bottom-color:transparent; background:var(--surface-2); color:var(--ink-2);
+}
+.tab.on{background:var(--surface); color:var(--ink); font-weight:600; border-color:var(--accent); border-bottom-color:var(--accent)}
+.tab .dot{margin-right:6px}
+.mail-subj{
+  width:100%; padding:10px 12px; border:1px solid var(--line-2); border-radius:8px;
+  background:var(--surface-2); font-size:14px; font-weight:600; margin-bottom:10px;
+}
+.mail-body{
+  width:100%; min-height:380px; padding:14px 15px; border:1px solid var(--line-2); border-radius:8px;
+  background:var(--surface-2); font-size:14px; line-height:1.62; resize:vertical;
+  font-family:"IBM Plex Sans",sans-serif;
+}
+.mail-foot{display:flex; gap:9px; flex-wrap:wrap; align-items:center; margin-top:12px}
+.hint{font-size:12.5px; color:var(--ink-3); flex:1; min-width:150px}
+
+/* briefing */
+.brief{padding:22px 26px}
+.brief h3{font-family:"IBM Plex Serif",Georgia,serif; font-size:23px; letter-spacing:-.02em}
+.brief-meta{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); margin-top:5px}
+
+/* vragenset */
+.vs-filter{display:flex; gap:6px; flex-wrap:wrap; margin:17px 0 0}
+.vs-filter button{
+  padding:5px 12px; border-radius:20px; font-size:12.5px; font-weight:500;
+  border:1px solid var(--line); background:var(--surface); color:var(--ink-2);
+}
+.vs-filter button:hover{border-color:var(--ink-3)}
+.vs-filter button.on{background:var(--accent); color:var(--on-accent); border-color:var(--accent); font-weight:600}
+.vs-count{font-size:12.5px; color:var(--ink-3); margin-top:13px}
+.vs-list{margin-top:2px}
+.vraag{display:flex; gap:13px; padding:14px 0; border-bottom:1px solid var(--line)}
+.vraag:last-child{border-bottom:none}
+.vraag-n{
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3);
+  flex:none; width:19px; text-align:right; padding-top:4px;
+}
+.vraag-b{flex:1; min-width:0}
+.vraag-t{font-size:15px; line-height:1.5; text-wrap:pretty}
+.vraag-w{
+  font-size:12.5px; color:var(--ink-3); line-height:1.5; margin-top:7px;
+  padding-left:11px; border-left:2px solid var(--line-2);
+}
+.vraag-r{display:flex; gap:5px; flex-wrap:wrap; margin-top:8px}
+.vs-leeg{padding:26px 0; color:var(--ink-3); font-size:14px}
+
+/* klantenlijst */
+.kl{margin-top:14px; padding:15px 17px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius)}
+.kl-top{display:flex; align-items:center; gap:12px; flex-wrap:wrap}
+.kl-top h3{font-size:13.5px; font-weight:600}
+.kl-top p{font-size:12.5px; color:var(--ink-3); flex:1; min-width:190px}
+.kl-file{position:relative; overflow:hidden; display:inline-flex}
+.kl-file input{position:absolute; inset:0; opacity:0; cursor:pointer; font-size:0}
+.kl-stat{display:flex; gap:9px 22px; flex-wrap:wrap; margin-top:13px; padding-top:13px; border-top:1px solid var(--line)}
+.kl-stat div{font-size:12.5px; color:var(--ink-3)}
+.kl-stat b{display:block; font-family:"IBM Plex Mono",monospace; font-size:17px; color:var(--ink); font-weight:600}
+.kl-mij{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-top:13px; font-size:13px}
+.kl-mij select{padding:6px 9px; border-radius:7px; border:1px solid var(--line-2); background:var(--surface); font-size:13px; max-width:100%}
+.kl-warn{
+  margin-top:12px; padding:10px 13px; border-radius:8px; font-size:12.5px; line-height:1.55;
+  background:var(--amber-soft); color:var(--amber);
+}
+.am-chip{
+  font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; white-space:nowrap;
+  background:var(--surface-3); color:var(--ink-2);
+}
+.am-chip.mij{background:var(--accent-soft); color:var(--accent)}
+.am-chip.leeg{background:var(--red-soft); color:var(--red)}
+
+/* analysestappen */
+.stap{display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--line)}
+.stap:last-child{border-bottom:none}
+.stap-n{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--ink-3);
+  flex:none; width:18px; text-align:right; padding-top:3px;
+}
+.stap-b{flex:1; min-width:0}
+.stap-t{font-size:14px; font-weight:500}
+.stap-s{font-size:12.5px; color:var(--ink-3); margin-top:2px}
+.stap-st{
+  font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+  padding:3px 8px; border-radius:5px; white-space:nowrap; flex:none; margin-top:2px;
+}
+.stap-st.nu{background:var(--green-soft); color:var(--green)}
+.stap-st.wacht{background:var(--amber-soft); color:var(--amber)}
+
+/* api-verkenner */
+.api-bron{display:flex; align-items:center; gap:9px; padding:7px 0; font-size:13px; border-bottom:1px dashed var(--line)}
+.api-bron:last-of-type{border-bottom:none}
+.api-bron b{flex:1; font-weight:500}
+.api-ok{color:var(--green); font-weight:600; font-size:12px}
+.api-nee{color:var(--red); font-weight:600; font-size:12px}
+.api-form{display:flex; gap:7px; flex-wrap:wrap; align-items:center; margin-top:13px}
+.api-form select,.api-form input{
+  padding:7px 9px; border-radius:7px; border:1px solid var(--line-2);
+  background:var(--surface); font-size:13px; font-family:"IBM Plex Mono",monospace;
+}
+.api-form input{flex:1; min-width:170px}
+.api-body{
+  width:100%; margin-top:7px; min-height:64px; padding:9px 11px; border-radius:7px;
+  border:1px solid var(--line-2); background:var(--surface);
+  font-family:"IBM Plex Mono",monospace; font-size:12px; resize:vertical;
+}
+.api-uit{
+  margin-top:11px; padding:11px 13px; border-radius:7px; background:var(--surface-2);
+  border:1px solid var(--line); font-family:"IBM Plex Mono",monospace; font-size:11.5px;
+  line-height:1.55; white-space:pre-wrap; word-break:break-word; max-height:280px; overflow:auto;
+}
+.api-uit.fout{background:var(--red-soft); color:var(--red); border-color:transparent}
+
+/* toast */
+.toast{
+  position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(8px);
+  background:var(--ink); color:var(--bg); padding:10px 18px; border-radius:22px;
+  font-size:13.5px; font-weight:500; z-index:80; opacity:0; pointer-events:none;
+  transition:opacity .18s, transform .18s; box-shadow:var(--shadow); max-width:90vw; text-align:center;
+}
+.toast.on{opacity:1; transform:translateX(-50%) translateY(0)}
+
+.footnote{
+  margin-top:40px; padding-top:18px; border-top:1px solid var(--line);
+  font-size:12.5px; color:var(--ink-3); max-width:72ch; line-height:1.6;
+}
+@media (prefers-reduced-motion:reduce){ *{transition:none !important; animation:none !important} }
+</style>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <div class="brand" id="home" role="button" tabindex="0">
+      <div class="brand-mark"></div>
+      <div>
+        <div class="brand-name">Prospect Kompas</div>
+        <div class="brand-sub">New business &middot; grootzakelijk NL</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <button class="btn btn-sm" id="btn-shortlist">Shortlist <span class="count-chip" id="sl-count">0</span></button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="view-start"></div>
+  <div id="view-dossier" hidden></div>
+  <div class="footnote">
+    Demo-omgeving. Alle bedrijven, personen, contactgegevens en cijfers zijn <b>fictief</b> en dienen alleen om het
+    ontwerp te tonen. De bronlabels bij elk blok &mdash; <span class="src">Company.info</span>
+    <span class="src">Lusha</span> <span class="src">Klantenlijst</span> &mdash; markeren waar een echte
+    API-koppeling later zou inprikken.
+  </div>
+</div>
+
+<div id="ov" hidden></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ============================ DEMO DATA ============================ */
+
+const N = (naam, plaats, mdw, status, arr, note, kinderen) =>
+  ({naam, plaats, mdw, status, arr: arr||0, note: note||"", kinderen: kinderen||[]});
+
+const PROSPECTS = [
+{
+  id:"vanoordt",
+  naam:"Van Oordt Logistics Group B.V.",
+  kort:"Van Oordt Logistics",
+  branche:"Logistiek & transport",
+  sbi:"4941 &mdash; Goederenvervoer over de weg",
+  kvk:"24318772",
+  plaats:"Tilburg",
+  mdw:1430,
+  opgericht:"1974",
+  status:"deels",
+  arr:14200,
+  contract:"Mobiel &middot; 420 aansluitingen &middot; einddatum 31-03-2027",
+  waarom:"Complexe concernstructuur: <b>4 van de 9 entiteiten</b> doen zaken met ons. De rest is nooit benaderd.",
+  aanleiding:"de aangekondigde uitbreiding met het nieuwe distributiecentrum in Venlo",
+  opener:{
+    bestuur:"Ik las dat Van Oordt in Venlo een distributiecentrum van 18.000 m&sup2; opent en dit voorjaar Transportbedrijf Kempen heeft overgenomen. Twee bewegingen die de groep in korte tijd flink laten groeien.",
+    operatie:"Via de aankondiging van het nieuwe DC in Venlo en de openstaande vacature voor een specialist IT-infrastructuur kreeg ik een beeld van wat er bij Van Oordt op de rol staat."
+  },
+  tree: N("Van Oordt Logistics Group B.V.","Tilburg",1430,"deels",0,"Holding",[
+    N("Van Oordt Wegtransport B.V.","Tilburg",620,"klant",9100,"Mobiel, sinds 2021"),
+    N("Van Oordt Koeltransport B.V.","Venlo",210,"klant",3400,"Mobiel, sinds 2023"),
+    N("Van Oordt Warehousing B.V.","Tilburg",340,"wit",0,"",[
+      N("DC Tilburg-Zuid","Tilburg",190,"wit"),
+      N("DC Venlo (in aanbouw)","Venlo",150,"wit",0,"Oplevering Q1 2027")
+    ]),
+    N("Oordt Fresh Logistics B.V.","Barendrecht",145,"deels",1700,"Alleen vaste telefonie"),
+    N("Van Oordt Douane Services B.V.","Rotterdam",38,"wit"),
+    N("Transportbedrijf Kempen B.V.","Weert",77,"wit",0,"Overgenomen juli 2026")
+  ]),
+  signalen:[
+    {d:"12-09-26", t:"Vacature", hot:true, tekst:"Vacature <b>Specialist IT-Infrastructuur</b> staat 14 dagen open &mdash; tweede IT-vacature dit kwartaal.", bron:"Company.info &middot; vacaturefeed"},
+    {d:"28-08-26", t:"Uitbreiding", hot:true, tekst:"Nieuw distributiecentrum Venlo aangekondigd: 18.000 m&sup2;, oplevering Q1 2027.", bron:"Persbericht &middot; regionale pers"},
+    {d:"03-07-26", t:"Overname", tekst:"Overname <b>Transportbedrijf Kempen B.V.</b> (Weert, 77 mdw) afgerond.", bron:"Company.info &middot; KvK-mutatie"},
+    {d:"19-05-26", t:"Directiewissel", tekst:"Ellen Dorsman aangetreden als CFO, afkomstig uit de retaillogistiek.", bron:"Lusha &middot; functiewijziging"}
+  ],
+  dmu:[
+    {id:"p1", naam:"Wouter van Oordt", rol:"Algemeen directeur", label:"beslisser", klasse:"beslisser", mail:"w.vanoordt@vanoordt-demo.nl", tel:"+31 6 21 44 09 12", extra:"Tweede generatie &middot; 11 jaar in functie"},
+    {id:"p2", naam:"Rachid El Amrani", rol:"Manager ICT &amp; Telematica", label:"be&iuml;nvloeder", klasse:"it", mail:"r.elamrani@vanoordt-demo.nl", tel:"+31 6 30 77 21 88", extra:"Beheert boordcomputers in 480 trucks"},
+    {id:"p3", naam:"Ellen Dorsman", rol:"CFO", label:"beslisser budget", klasse:"budget", mail:"e.dorsman@vanoordt-demo.nl", tel:"+31 13 594 22 10", extra:"In functie sinds mei 2026"},
+    {id:"p4", naam:"Milan Broekhuis", rol:"Fleet &amp; Operations Manager", label:"gebruiker", klasse:"gebruiker", mail:"m.broekhuis@vanoordt-demo.nl", tel:"+31 6 18 62 40 77", extra:"Aanspreekpunt voor 480 chauffeurs"},
+    {id:"p5", naam:"Yasmin Karadeniz", rol:"Inkoop &amp; Contractbeheer", label:"poortwachter", klasse:"poortwachter", mail:"y.karadeniz@vanoordt-demo.nl", tel:"+31 13 594 22 45", extra:"Bundelt contracten sinds de overname"}
+  ],
+  vragen:[
+    {v:"Wegtransport en Koeltransport werken al jaren met ons, Warehousing en Douane Services niet. Is dat ooit een bewuste keuze geweest, of is het zo gegroeid?",
+     w:"Vijf van de negen entiteiten hebben geen omzet bij ons, terwijl twee zusterbedrijven al klant zijn", r:["beslisser","budget"]},
+    {v:"Hoe is het telecombeheer nu belegd &mdash; centraal vanuit de holding, of regelt elke werkmaatschappij dat zelf?",
+     w:"De gespreide status over de entiteiten wijst op decentrale inkoop", r:["it","budget","poortwachter"]},
+    {v:"Transportbedrijf Kempen hoort sinds juli bij de groep. Wat gebeurt er met hun lopende contracten &mdash; overnemen, uitdienen of opnieuw bekijken?",
+     w:"Overname afgerond 03-07-2026; die entiteit staat nog als witte vlek", r:["beslisser","budget","poortwachter"]},
+    {v:"Het DC in Venlo wordt begin 2027 opgeleverd. Wanneer moet de connectiviteit daar staan, en wie bepaalt dat?",
+     w:"Nieuw distributiecentrum van 18.000 m&sup2; aangekondigd op 28-08-2026", r:["it","beslisser","gebruiker"]},
+    {v:"U zoekt een specialist IT-infrastructuur. Is dat uitbreiding, of vervangt die iemand die wegging?",
+     w:"Tweede IT-vacature van dit kwartaal, 14 dagen open", r:["it","beslisser"]},
+    {v:"Hoeveel van de 480 boordcomputers zitten op een verbinding die u zelf beheert, en hoeveel via de leverancier van de wagens?",
+     w:"Rachid El Amrani beheert de boordcomputers in 480 trucks", r:["it","gebruiker"]},
+    {v:"Waar lopen chauffeurs in de praktijk vast op bereik &mdash; op welke routes gaat het mis?",
+     w:"480 chauffeurs; Milan Broekhuis is hun dagelijkse aanspreekpunt", r:["gebruiker","it"]},
+    {v:"Het mobiele contract loopt tot maart 2027. Wanneer begint bij u de voorbereiding op zo&rsquo;n verlenging?",
+     w:"Einddatum 31-03-2027, 420 aansluitingen", r:["budget","poortwachter","beslisser"]},
+    {v:"U bent sinds mei CFO. Waar wilt u in de kostenbasis als eerste iets zien veranderen?",
+     w:"Ellen Dorsman aangetreden mei 2026, afkomstig uit de retaillogistiek", r:["budget","beslisser"]},
+    {v:"Als u vandaag de telecomcontracten van alle negen entiteiten op &eacute;&eacute;n A4 zou willen &mdash; zou dat lukken?",
+     w:"Negen entiteiten, vier met een relatie bij ons, de rest onbekend", r:["budget","it","poortwachter"]}
+  ]
+},
+{
+  id:"helder",
+  naam:"Stichting Helder Zorggroep",
+  kort:"Helder Zorggroep",
+  branche:"Zorg",
+  sbi:"8710 &mdash; Verpleeg- en verzorgingshuizen",
+  kvk:"41178903",
+  plaats:"Utrecht",
+  mdw:3200,
+  opgericht:"1998",
+  status:"wit",
+  arr:0,
+  contract:"Geen actief contract",
+  waarom:"<b>Volledig witte vlek</b> op 3.200 medewerkers en 28 locaties. Aanbesteding connectiviteit gepland voor Q4 2026.",
+  aanleiding:"de aangekondigde aanbesteding voor connectiviteit en mobiele communicatie",
+  opener:{
+    bestuur:"Op TenderNed zag ik de vooraankondiging van uw aanbesteding voor connectiviteit en mobiele communicatie, en in het jaarverslag las ik over de investeringsagenda van &euro;12 miljoen voor digitalisering.",
+    operatie:"Ik zag dat Helder Zorggroep de locaties Nieuwegein en Houten per 1 januari samenvoegt, en dat er een aanbesteding voor connectiviteit aankomt."
+  },
+  tree: N("Stichting Helder Zorggroep","Utrecht",3200,"wit",0,"Koepel",[
+    N("Helder Wonen &amp; Verpleging B.V.","Nieuwegein",1420,"wit",0,"11 locaties",[
+      N("Locatie De Meerhoeve","Nieuwegein",240,"wit"),
+      N("Locatie Parkzicht","Houten",185,"wit",0,"Samenvoeging per 01-01-2027"),
+      N("9 overige woonlocaties","Provincie Utrecht",995,"wit")
+    ]),
+    N("Helder Thuiszorg B.V.","Utrecht",1150,"wit",0,"Grotendeels buitendienst"),
+    N("Helder Revalidatie B.V.","Amersfoort",380,"wit"),
+    N("Helder Diensten &amp; ICT B.V.","Utrecht",96,"wit",0,"Shared service voor de hele groep"),
+    N("Helder Vastgoed B.V.","Utrecht",24,"wit")
+  ]),
+  signalen:[
+    {d:"09-09-26", t:"Aanbesteding", hot:true, tekst:"Vooraankondiging <b>&lsquo;Connectiviteit en mobiele communicatie&rsquo;</b> op TenderNed. Publicatie verwacht Q4 2026.", bron:"TenderNed &middot; vooraankondiging"},
+    {d:"21-08-26", t:"Reorganisatie", hot:true, tekst:"Locaties Nieuwegein en Houten worden samengevoegd per <b>01-01-2027</b>.", bron:"Nieuwsbericht &middot; eigen website"},
+    {d:"14-07-26", t:"Vacature", tekst:"Vacature <b>Projectleider Digitale Zorg</b> (36 uur) geplaatst.", bron:"Company.info &middot; vacaturefeed"},
+    {d:"02-06-26", t:"Jaarverslag", tekst:"Investeringsagenda van <b>&euro;12 mln</b> aangekondigd voor digitalisering en zorgtechnologie t/m 2029.", bron:"Jaarverslag 2025"}
+  ],
+  dmu:[
+    {id:"p1", naam:"Marloes de Wit", rol:"CIO", label:"beslisser", klasse:"beslisser", mail:"m.dewit@helderzorg-demo.nl", tel:"+31 30 288 14 50", extra:"Lid van het directieteam"},
+    {id:"p2", naam:"Jeroen Vlaming", rol:"Manager ICT &amp; Infrastructuur", label:"be&iuml;nvloeder", klasse:"it", mail:"j.vlaming@helderzorg-demo.nl", tel:"+31 6 44 21 70 03", extra:"Helder Diensten &amp; ICT B.V."},
+    {id:"p3", naam:"Sanne Bakker", rol:"Concerncontroller", label:"beslisser budget", klasse:"budget", mail:"s.bakker@helderzorg-demo.nl", tel:"+31 30 288 14 22", extra:"Bewaakt de investeringsagenda"},
+    {id:"p4", naam:"Tom Aker", rol:"Hoofd Facilitair Bedrijf", label:"gebruiker", klasse:"gebruiker", mail:"t.aker@helderzorg-demo.nl", tel:"+31 6 12 88 45 61", extra:"Verantwoordelijk voor 28 locaties"},
+    {id:"p5", naam:"Priya Raghunath", rol:"Inkoopadviseur", label:"poortwachter", klasse:"poortwachter", mail:"p.raghunath@helderzorg-demo.nl", tel:"+31 30 288 14 77", extra:"Begeleidt de aanbestedingen"}
+  ],
+  vragen:[
+    {v:"De aanbesteding voor connectiviteit staat aangekondigd voor Q4. In welke fase zit de marktverkenning nu?",
+     w:"Vooraankondiging op TenderNed, 09-09-2026", r:["poortwachter","beslisser","it"]},
+    {v:"Wie schrijft het programma van eisen &mdash; Helder Diensten &amp; ICT zelf, of doet een extern bureau dat mee?",
+     w:"Helder Diensten &amp; ICT B.V. is de shared service voor de hele groep, 96 medewerkers", r:["poortwachter","it"]},
+    {v:"Wat moet er volgens u anders dan bij de vorige aanbesteding?",
+     w:"Geen bestaande relatie bij ons; alle negen entiteiten zijn witte vlek", r:["beslisser","it"]},
+    {v:"Nieuwegein en Houten gaan per 1 januari samen. Wat betekent dat voor de netwerken van beide panden?",
+     w:"Samenvoeging aangekondigd op 21-08-2026, ingangsdatum 01-01-2027", r:["it","gebruiker","beslisser"]},
+    {v:"Van de investeringsagenda van &euro;12 miljoen &mdash; welk deel raakt infrastructuur en connectiviteit?",
+     w:"Jaarverslag 2025: investeringsagenda digitalisering en zorgtechnologie t/m 2029", r:["budget","beslisser"]},
+    {v:"Thuiszorg heeft ruim elfhonderd mensen vrijwel volledig onderweg. Hoe vaak is slecht bereik daar een probleem bij het vastleggen van zorg?",
+     w:"Helder Thuiszorg B.V., 1.150 medewerkers, grotendeels buitendienst", r:["gebruiker","it"]},
+    {v:"Wat gebeurt er op een zorglocatie als de verbinding wegvalt &mdash; is er een terugvaloptie, of ligt het stil?",
+     w:"28 locaties, geen redundantie bekend in ons beeld", r:["it","gebruiker","beslisser"]},
+    {v:"Kopen de werkmaatschappijen zelf in, of loopt alles via de koepel?",
+     w:"Negen entiteiten, geen enkele met een relatie bij ons", r:["poortwachter","budget"]},
+    {v:"De vacature voor projectleider digitale zorg &mdash; wat moet die persoon als eerste opleveren?",
+     w:"Vacature geplaatst 14-07-2026, 36 uur", r:["it","beslisser"]},
+    {v:"Wat weegt bij u zwaarder in de beoordeling: de prijs, of aantoonbare continu&iuml;teit op de zorglocaties?",
+     w:"Gunningscriteria liggen nog niet vast; publicatie verwacht Q4", r:["poortwachter","beslisser","budget"]}
+  ]
+},
+{
+  id:"nordkamp",
+  naam:"Nordkamp Retail Holding B.V.",
+  kort:"Nordkamp Retail",
+  branche:"Retail",
+  sbi:"4759 &mdash; Winkels in wonen en interieur",
+  kvk:"33204411",
+  plaats:"Zwolle",
+  mdw:890,
+  opgericht:"1986",
+  status:"deels",
+  arr:6800,
+  contract:"Mobiel &middot; 210 aansluitingen (alleen Kamphuis Interieur)",
+  waarom:"Het <b>contract van de concurrent</b> voor vaste data op 34 winkels loopt af op 31-01-2027.",
+  aanleiding:"het aflopende dataconnectiviteitscontract voor de 34 woonwinkels",
+  opener:{
+    bestuur:"Ik begreep dat het contract voor de dataverbindingen van de 34 Nordkamp-winkels eind januari afloopt, en dat er voor 2027 vier nieuwe vestigingen op de planning staan.",
+    operatie:"Ik zag dat Nordkamp er in 2027 vier winkels bij krijgt en dat de huidige dataverbindingen van de winkels eind januari aflopen."
+  },
+  tree: N("Nordkamp Retail Holding B.V.","Zwolle",890,"deels",0,"Holding",[
+    N("Nordkamp Wonen B.V.","Zwolle",540,"wit",0,"34 winkels in NL",[
+      N("Regio Noord &amp; Oost","Zwolle",245,"wit",0,"15 winkels"),
+      N("Regio West &amp; Zuid","Utrecht",295,"wit",0,"19 winkels")
+    ]),
+    N("Kamphuis Interieur B.V.","Apeldoorn",180,"klant",6800,"Mobiel, sinds 2022"),
+    N("Nordkamp Online B.V.","Zwolle",95,"wit",0,"Webshop &amp; fulfilment"),
+    N("Nordkamp Distributie B.V.","Kampen",75,"wit",0,"Centraal magazijn")
+  ]),
+  signalen:[
+    {d:"11-09-26", t:"Contractafloop", hot:true, tekst:"Contract vaste data voor <b>34 winkels</b> loopt af op 31-01-2027 (huidige leverancier: concurrent).", bron:"Klantsignaal &middot; CRM-notitie"},
+    {d:"30-08-26", t:"Uitbreiding", tekst:"<b>Vier nieuwe winkels</b> aangekondigd voor 2027: Almere, Breda, Groningen, Amersfoort.", bron:"Persbericht &middot; retailvakblad"},
+    {d:"15-08-26", t:"Vacature", tekst:"Vacature <b>Netwerkbeheerder</b> geplaatst voor het hoofdkantoor in Zwolle.", bron:"Company.info &middot; vacaturefeed"},
+    {d:"08-04-26", t:"Verhuizing", tekst:"Nordkamp Online verhuisd naar een nieuw pand aan de Zwolse Hanzelaan.", bron:"Company.info &middot; adreswijziging"}
+  ],
+  dmu:[
+    {id:"p1", naam:"Ingrid Nordkamp-Veltman", rol:"Directeur / eigenaar", label:"beslisser", klasse:"beslisser", mail:"i.nordkamp@nordkamp-demo.nl", tel:"+31 38 421 66 00", extra:"Beslist zelf over grote contracten"},
+    {id:"p2", naam:"Dennis Ploeg", rol:"Manager IT &amp; Digital", label:"be&iuml;nvloeder", klasse:"it", mail:"d.ploeg@nordkamp-demo.nl", tel:"+31 6 27 33 51 90", extra:"Werft nu een netwerkbeheerder"},
+    {id:"p3", naam:"Fatima Ouali", rol:"Financieel directeur", label:"beslisser budget", klasse:"budget", mail:"f.ouali@nordkamp-demo.nl", tel:"+31 38 421 66 24", extra:"Stuurt op kosten per winkel"},
+    {id:"p4", naam:"Erik Stavast", rol:"Hoofd Winkeloperatie", label:"gebruiker", klasse:"gebruiker", mail:"e.stavast@nordkamp-demo.nl", tel:"+31 6 51 09 77 12", extra:"34 winkelmanagers rapporteren aan hem"},
+    {id:"p5", naam:"Joyce ter Beek", rol:"Inkoop non-trade", label:"poortwachter", klasse:"poortwachter", mail:"j.terbeek@nordkamp-demo.nl", tel:"+31 38 421 66 31", extra:"Voert de leveranciersvergelijking uit"}
+  ],
+  vragen:[
+    {v:"De dataverbindingen van de 34 winkels lopen eind januari af. Wanneer valt de beslissing over de opvolging?",
+     w:"Contractafloop 31-01-2027, huidige leverancier is een concurrent", r:["beslisser","budget","poortwachter"]},
+    {v:"Kamphuis Interieur werkt al sinds 2022 met ons. Wat maakt dat de rest van de groep dat niet doet?",
+     w:"E&eacute;n van de zeven entiteiten is klant, goed voor &euro;6.800", r:["beslisser","budget"]},
+    {v:"Wat gaat er nu mis in een winkel als de verbinding hapert &mdash; merkt de klant dat aan de kassa?",
+     w:"34 winkels met pinverkeer en klantwifi op dezelfde verbinding", r:["gebruiker","it","beslisser"]},
+    {v:"Er komen in 2027 vier winkels bij. Hoe lang duurt het nu voordat een nieuwe winkel volledig online is?",
+     w:"Almere, Breda, Groningen en Amersfoort aangekondigd op 30-08-2026", r:["it","gebruiker","beslisser"]},
+    {v:"U zoekt een netwerkbeheerder. Wat zou die persoon straks n&iacute;et meer hoeven doen als het beheer elders lag?",
+     w:"Vacature netwerkbeheerder hoofdkantoor Zwolle, 15-08-2026", r:["it","beslisser"]},
+    {v:"Wat kost een uur zonder pinverkeer in een gemiddelde woonwinkel?",
+     w:"Geen redundantie bekend; retail is direct transactie-afhankelijk", r:["budget","beslisser"]},
+    {v:"Zit er verschil in hoe de winkels in Noord &amp; Oost en West &amp; Zuid zijn aangesloten, of is het overal hetzelfde?",
+     w:"Twee regio&rsquo;s in de structuur, 15 en 19 winkels, beide witte vlek", r:["it","gebruiker"]},
+    {v:"Nordkamp Online is in april verhuisd. Is dat een moment geweest om de verbindingen opnieuw te bekijken?",
+     w:"Adreswijziging naar de Zwolse Hanzelaan, 08-04-2026", r:["it","budget"]},
+    {v:"Hoe vergelijkt u leveranciers bij zoiets &mdash; op tarief per aansluiting, of op totale kosten inclusief beheer en uitval?",
+     w:"Joyce ter Beek voert de leveranciersvergelijking uit vanuit inkoop non-trade", r:["poortwachter","budget"]}
+  ]
+},
+{
+  id:"ravenstein",
+  naam:"Ravenstein Techniek Groep B.V.",
+  kort:"Ravenstein Techniek",
+  branche:"Industrie &amp; techniek",
+  sbi:"2825 &mdash; Machine- en apparatenbouw",
+  kvk:"09087455",
+  plaats:"Apeldoorn",
+  mdw:1150,
+  opgericht:"1961",
+  status:"wit",
+  arr:0,
+  contract:"Geen actief contract",
+  waarom:"Witte vlek met <b>280 buitendienstmonteurs</b> en een productienetwerk dat dit jaar al uitviel.",
+  aanleiding:"de investering van &euro;8 miljoen in de nieuwe productielijn in Apeldoorn",
+  opener:{
+    bestuur:"Ik las over de investering van &euro;8 miljoen in de nieuwe productielijn in Apeldoorn en over de afronding van de overname van Stolwijk Precisie.",
+    operatie:"De vacature voor een OT/IT security engineer en de investering in de nieuwe productielijn in Apeldoorn vielen me op."
+  },
+  tree: N("Ravenstein Techniek Groep B.V.","Apeldoorn",1150,"wit",0,"Holding",[
+    N("Ravenstein Machinebouw B.V.","Apeldoorn",460,"wit",0,"Productielocatie"),
+    N("Ravenstein Service &amp; Onderhoud B.V.","Deventer",310,"wit",0,"280 monteurs in de buitendienst"),
+    N("Ravenstein Automation B.V.","Eindhoven",190,"wit",0,"Engineering &amp; software"),
+    N("Stolwijk Precisie B.V.","Zutphen",120,"wit",0,"Overgenomen juni 2026"),
+    N("Ravenstein International GmbH","Kleve (DE)",70,"wit",0,"Buiten NL-scope")
+  ]),
+  signalen:[
+    {d:"05-09-26", t:"Investering", hot:true, tekst:"Investering van <b>&euro;8 mln</b> in een nieuwe productielijn in Apeldoorn, operationeel medio 2027.", bron:"Persbericht &middot; industrievakblad"},
+    {d:"27-08-26", t:"Vacature", hot:true, tekst:"Vacature <b>OT/IT Security Engineer</b> &mdash; derde openstaande IT-vacature van dit kwartaal.", bron:"Company.info &middot; vacaturefeed"},
+    {d:"12-06-26", t:"Overname", tekst:"Overname <b>Stolwijk Precisie B.V.</b> (Zutphen, 120 mdw) afgerond.", bron:"Company.info &middot; KvK-mutatie"},
+    {d:"20-03-26", t:"Storing", tekst:"Productienetwerk Apeldoorn lag een dagdeel plat; in een vakblad genoemd als &lsquo;kostbare les&rsquo;.", bron:"Vakblad &middot; nieuwsbericht"}
+  ],
+  dmu:[
+    {id:"p1", naam:"Hendrik Ravenstein", rol:"CEO", label:"beslisser", klasse:"beslisser", mail:"h.ravenstein@ravenstein-demo.nl", tel:"+31 55 368 90 10", extra:"Derde generatie &middot; sterk op continu&iuml;teit"},
+    {id:"p2", naam:"Anouk Tjeerdsma", rol:"Manager IT &amp; OT", label:"be&iuml;nvloeder", klasse:"it", mail:"a.tjeerdsma@ravenstein-demo.nl", tel:"+31 6 39 55 02 41", extra:"Verantwoordelijk voor het productienetwerk"},
+    {id:"p3", naam:"Gerrit Bosma", rol:"Financieel directeur", label:"beslisser budget", klasse:"budget", mail:"g.bosma@ravenstein-demo.nl", tel:"+31 55 368 90 26", extra:"Bewaakt de investeringsbegroting"},
+    {id:"p4", naam:"Nadia Belkacem", rol:"Manager Service &amp; Onderhoud", label:"gebruiker", klasse:"gebruiker", mail:"n.belkacem@ravenstein-demo.nl", tel:"+31 6 46 71 22 85", extra:"Stuurt 280 buitendienstmonteurs aan"},
+    {id:"p5", naam:"Paul Wiersema", rol:"Hoofd Inkoop", label:"poortwachter", klasse:"poortwachter", mail:"p.wiersema@ravenstein-demo.nl", tel:"+31 55 368 90 34", extra:"Hanteert een vaste leverancierstoets"}
+  ],
+  vragen:[
+    {v:"In maart lag het productienetwerk in Apeldoorn een dagdeel plat. Wat is daar de conclusie van geweest?",
+     w:"In een vakblad genoemd als &lsquo;kostbare les&rsquo;, 20-03-2026", r:["beslisser","it","budget"]},
+    {v:"Zijn kantoor- en productienetwerk bij u gescheiden, of loopt dat door elkaar?",
+     w:"Vacature OT/IT Security Engineer plus de storing van maart", r:["it","beslisser"]},
+    {v:"De nieuwe productielijn vraagt &euro;8 miljoen. Zit connectiviteit in dat budget, of komt dat uit een andere pot?",
+     w:"Investering aangekondigd 05-09-2026, operationeel medio 2027", r:["budget","beslisser","it"]},
+    {v:"Dit is uw derde IT-vacature van het kwartaal. Wat lukt er nu niet dat straks w&eacute;l moet?",
+     w:"OT/IT Security Engineer gezocht sinds 27-08-2026", r:["it","beslisser"]},
+    {v:"Uw 280 monteurs zijn de hele dag onderweg. Hoe vaak lopen ze vast omdat ze iets niet kunnen opzoeken of vastleggen?",
+     w:"Ravenstein Service &amp; Onderhoud B.V., 280 monteurs in de buitendienst", r:["gebruiker","it","beslisser"]},
+    {v:"Stolwijk Precisie is sinds juni van u. Draait dat nog op de eigen IT, of is het al aangesloten op de groep?",
+     w:"Overname afgerond 12-06-2026; de entiteit staat nog los in de structuur", r:["it","beslisser","budget"]},
+    {v:"Geen van de zes entiteiten doet vandaag zaken met ons. Weet u of dat ooit is overwogen?",
+     w:"Volledig witte vlek over de hele groep, nul euro omzet", r:["beslisser","budget"]},
+    {v:"Ravenstein International zit net over de grens in Kleve. Hoe is dat geregeld voor mensen die heen en weer reizen?",
+     w:"Duitse entiteit met 70 medewerkers, buiten de NL-scope", r:["it","gebruiker","budget"]},
+    {v:"Wat moet een leverancier aantonen voordat hij bij u in aanmerking komt?",
+     w:"Paul Wiersema hanteert een vaste leverancierstoets", r:["poortwachter","beslisser"]},
+    {v:"Als de nieuwe lijn straks draait en er valt iets weg &mdash; hoeveel minuten stilstand is acceptabel?",
+     w:"Nieuwe productielijn medio 2027; de storing van maart ligt nog vers", r:["beslisser","it","gebruiker"]}
+  ]
+}
+];
+
+const STUBS = [
+  ["Meridiaan Bouwgroep N.V.","Rotterdam",1180,"Bouw"],
+  ["Delta Installatietechniek B.V.","Dordrecht",640,"Installatie"],
+  ["Brouwers Food Services","Veghel",2100,"Food"],
+  ["Stadsregio Kennemerland","Haarlem",980,"Overheid"],
+  ["Van Tuyl Groothandel B.V.","Ede",420,"Groothandel"],
+  ["Hogeschool Nieuwe Maas","Rotterdam",1750,"Onderwijs"],
+  ["Kwadrant Verzekeringen","Amstelveen",860,"Financieel"],
+  ["Polderzicht Agro B.V.","Emmeloord",310,"Agrarisch"],
+  ["Nieuwenhuis Transport","Almelo",530,"Logistiek"],
+  ["De Reiger Hotelgroep","Amsterdam",720,"Horeca"],
+  ["Sanitas Klinieken","Eindhoven",1340,"Zorg"],
+  ["Batavier Staalbouw B.V.","IJmuiden",480,"Industrie"],
+  ["Woonstichting Rijnpoort","Arnhem",390,"Vastgoed"],
+  ["Cordaan Facilitair Groep","Utrecht","1.020","Facilitair"],
+  ["Zeeland Maritiem Services","Vlissingen",560,"Maritiem"],
+  ["Bergman Retail Partners","Tilburg",940,"Retail"],
+  ["Argos Techniek Holding","Helmond",670,"Techniek"],
+  ["Lingehof Zorgvastgoed","Gorinchem",280,"Zorg"]
+];
+
+/* ============================ MAIL-COPY ============================ */
+
+const HOEKEN = [
+  {id:"kosten", naam:"Kostenbesparing &amp; bundeling"},
+  {id:"groei", naam:"Groei &amp; schaalbaarheid"},
+  {id:"continuiteit", naam:"Continu&iuml;teit &amp; security"},
+  {id:"duurzaam", naam:"Verduurzaming"}
+];
+
+const ONDERWERP = {
+  kosten:{
+    beslisser:"Telecomcontracten van {kort} op groepsniveau",
+    budget:"Wat {entiteiten} losse contracten kosten aan beheer",
+    it:"Eén beheeromgeving voor {entiteiten} entiteiten",
+    gebruiker:"Minder losse abonnementen, hetzelfde werk",
+    poortwachter:"Vraag over het contractlandschap van {kort}"
+  },
+  groei:{
+    beslisser:"Meegroeien met {kort} in 2027",
+    budget:"Kosten per vestiging voorspelbaar houden",
+    it:"Nieuwe locaties aansluiten zonder projectlast",
+    gebruiker:"Nieuwe locaties dag één bereikbaar",
+    poortwachter:"Raamafspraak voor de uitbreiding van {kort}"
+  },
+  continuiteit:{
+    beslisser:"Wat een uur uitval {kort} kost",
+    budget:"Uitval afdekken zonder dubbele investering",
+    it:"Redundante verbindingen voor {kort}",
+    gebruiker:"Altijd bereikbaar, ook als de lijn wegvalt",
+    poortwachter:"Continuïteitseisen in uw leverancierstoets"
+  },
+  duurzaam:{
+    beslisser:"Connectiviteit en de CO₂-rapportage van {kort}",
+    budget:"Energieverbruik van netwerkapparatuur zichtbaar maken",
+    it:"Oudere apparatuur uitfaseren zonder uitval",
+    gebruiker:"Minder ritten door beter op afstand meekijken",
+    poortwachter:"Duurzaamheidscriteria bij telecominkoop"
+  }
+};
+
+const KERN = {
+  kosten:{
+    beslisser:"Bij een groep met {entiteiten} entiteiten lopen telecomcontracten vaak per werkmaatschappij door: verschillende leveranciers, verschillende afloopdata en beheer dat op drie plekken tegelijk gebeurt. Eén afspraak op groepsniveau maakt dat in één overzicht zichtbaar en levert in vergelijkbare trajecten 15 tot 25 procent besparing op.",
+    budget:"De grootste post is meestal niet het abonnement maar het beheer eromheen: {entiteiten} entiteiten betekent {entiteiten} facturatiestromen, evenzoveel contactpersonen en geen enkel totaalbeeld. Ik kan u een TCO-overzicht laten zien waarin abonnement, apparatuur en beheer per entiteit naast elkaar staan.",
+    it:"In de praktijk kost het beheer van losse contracten per werkmaatschappij u vooral tijd: aparte portals, aparte SIM-administraties en geen centraal overzicht van wat waar hangt. Eén beheeromgeving voor de hele groep neemt dat weg zonder dat u aan de techniek onder de motorkap iets hoeft te veranderen.",
+    gebruiker:"Voor uw mensen verandert er in het dagelijks werk weinig, behalve dat er één nummer is om te bellen als iets niet werkt. Dat scheelt vooral de irritatie van doorverwezen worden tussen leveranciers.",
+    poortwachter:"Ik zou graag willen weten hoe het telecomlandschap binnen de groep nu is ingericht: loopt dat per werkmaatschappij of is er al een raamafspraak? Op basis daarvan kan ik een gerichte vergelijking maken in plaats van een standaardvoorstel."
+  },
+  groei:{
+    beslisser:"Groei maakt een versnipperd telecomlandschap sneller duur dan de meeste organisaties verwachten: elke nieuwe locatie of overname brengt weer een eigen contract mee. Met één raamafspraak groeit de infrastructuur mee zonder dat er per keer opnieuw onderhandeld hoeft te worden.",
+    budget:"Met een raamafspraak staan de tarieven per aansluiting vast, ook voor locaties die er later bij komen. Dat maakt de begroting per vestiging voorspelbaar in plaats van een schatting achteraf.",
+    it:"Een nieuwe locatie aansluiten is nu vaak een project op zich: offerte, levertijd, installatie, en dan pas de inrichting. Met een vaste uitrolafspraak ligt de standaardconfiguratie klaar en is de doorlooptijd van aanvraag tot werkende verbinding doorgaans enkele weken.",
+    gebruiker:"Het verschil merkt u vooral bij de opening van een nieuwe locatie: netwerk, pin en telefonie werken vanaf dag één, in plaats van dat er de eerste weken nog aan geknutseld wordt.",
+    poortwachter:"Voor de uitbreiding die eraan komt, is de vraag of u per locatie wilt inkopen of één raamovereenkomst wilt neerzetten. Ik licht graag toe hoe dat bij vergelijkbare organisaties is ingericht, inclusief de voorwaarden rond opzegging en schaalbaarheid."
+  },
+  continuiteit:{
+    beslisser:"De vraag die ik het liefst stel: wat kost een uur zonder verbinding u eigenlijk? In de meeste organisaties is dat bedrag nooit uitgerekend, en blijkt het na de eerste echte storing een veelvoud van wat redundantie jaarlijks kost.",
+    budget:"Redundantie hoeft geen verdubbeling van de kosten te betekenen. Een tweede verbinding over een ander netwerk, die alleen bij uitval het verkeer overneemt, kost een fractie van de primaire lijn en dekt het grootste deel van het risico af.",
+    it:"Concreet: een tweede toegangspad over een ander netwerk, automatische omschakeling bij uitval, en monitoring die u een melding stuurt voordat de gebruikers het merken. Daarnaast een duidelijke scheiding tussen kantoor- en primair proces, zodat een probleem aan de ene kant niet doorwerkt aan de andere.",
+    gebruiker:"Voor de mensen op de vloer betekent het simpelweg dat ze doorwerken als er iets misgaat. De omschakeling gebeurt automatisch en is in de praktijk niet merkbaar.",
+    poortwachter:"Ik ben benieuwd welke continuïteitseisen u in uw leverancierstoets hanteert &mdash; hersteltijden, redundantie, rapportage. Dan kan ik onze invulling daar één op één naast leggen."
+  },
+  duurzaam:{
+    beslisser:"Connectiviteit is geen grote post in een CO₂-rapportage, maar wel een zichtbare: netwerkapparatuur die te lang meegaat, en reisbewegingen die met betere verbindingen niet nodig zijn. Beide zijn concreet te maken in de rapportage die u toch al moet opleveren.",
+    budget:"Het energieverbruik van netwerkapparatuur is bij veel organisaties een blinde vlek. Ik kan laten zien hoe dat per locatie in beeld te brengen is, zodat het meetelt in de rapportage in plaats van als schatting te worden opgenomen.",
+    it:"Praktisch gaat het om het uitfaseren van oudere apparatuur zonder onderbreking, en om verbruiksgegevens per locatie die u kunt exporteren. Dat scheelt u het handwerk van gegevens bij elkaar zoeken voor de jaarrapportage.",
+    gebruiker:"Waar het voor uw team echt verschil maakt: op afstand meekijken of uitlezen in plaats van ergens naartoe rijden. Dat scheelt ritten, en dus tijd én uitstoot.",
+    poortwachter:"Welke duurzaamheidscriteria weegt u mee bij telecominkoop? Ik lever graag vooraf de onderbouwing aan, zodat die niet pas in de beoordelingsfase hoeft te worden opgevraagd."
+  }
+};
+
+const VRAAG = {
+  beslisser:"Zou u er 30 minuten voor willen vrijmaken? Ik kom liever met een beeld van uw situatie dan met een algemene presentatie.",
+  budget:"Zullen we een half uur inplannen om het door te nemen? Ik neem het overzicht ingevuld mee, dan ziet u meteen of het klopt.",
+  it:"Heeft u ergens de komende twee weken een half uur? Ik hoor vooral graag hoe het nu is ingericht, dan kan ik gericht meedenken.",
+  gebruiker:"Mag ik u kort bellen om te horen waar het in de praktijk knelt? Dat is voor mij de meest bruikbare informatie.",
+  poortwachter:"Kunt u mij aangeven welke route hiervoor geldt en wie ik hierover het beste kan spreken? Dan houd ik me daaraan."
+};
+
+const KLASSE_OPENER = {beslisser:"bestuur", budget:"bestuur", it:"operatie", gebruiker:"operatie", poortwachter:"bestuur"};
+
+/* ============================ STATE ============================ */
+
+const state = {
+  view:"start",
+  prospect:null,
+  path:[],
+  shortlist:[],
+  sent:{},
+  afzender:"",
+  sel:[],
+  hoek:"kosten",
+  tab:0,
+  rolFilter:"alle",
+  klanten:[],
+  api:null,
+  klantBestand:"",
+  ikBen:"",
+  drafts:{}
+};
+
+/* Bewust zonder opslag: alle status hierboven leeft in het geheugen van de pagina
+   en is weg na een verversing. Geen browseropslag, geen backend. Elke demo begint
+   dus met een schoon scherm. */
+
+/* ============================ HELPERS ============================ */
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const deEnt = s => { const d=document.createElement("textarea"); d.innerHTML=s; return d.value; };
+const eur = n => "€ " + n.toLocaleString("nl-NL");
+const nl = n => Number(n).toLocaleString("nl-NL");
+
+const LABEL = {wit:"Witte vlek", deels:"Deels klant", klant:"Klant"};
+const ROLNAAM = {beslisser:"Beslisser", it:"Be&iuml;nvloeder", budget:"Budget",
+                 gebruiker:"Gebruiker", poortwachter:"Poortwachter"};
+
+function pillHtml(status){
+  return '<span class="pill s-'+status+'"><span class="dot"></span>'+LABEL[status]+'</span>';
+}
+function initialen(naam){
+  const p = deEnt(naam).replace(/\(.*\)/,"").trim().split(/[\s-]+/).filter(Boolean);
+  return ((p[0]||"")[0] || "") + ((p[p.length-1]||"")[0] || "");
+}
+function walk(node, fn){ fn(node); (node.kinderen||[]).forEach(k => walk(k, fn)); }
+function telling(node){
+  const t = {wit:0, deels:0, klant:0, totaal:0};
+  walk(node, n => { t[n.status]++; t.totaal++; });
+  return t;
+}
+function nodeAt(root, path){
+  let n = root;
+  for(const i of path){ n = n.kinderen[i]; }
+  return n;
+}
+function byId(id){ return PROSPECTS.find(p => p.id === id); }
+
+let toastT;
+function toast(msg){
+  const el = $("#toast");
+  el.innerHTML = msg;
+  el.classList.add("on");
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove("on"), 2600);
+}
+async function copy(text, msg){
+  try{
+    await navigator.clipboard.writeText(text);
+    toast(msg || "Gekopieerd naar klembord");
+  }catch(e){
+    toast("Kopi&euml;ren lukt niet in deze weergave &mdash; selecteer de tekst handmatig");
+  }
+}
+
+
+/* ============================ KLANTENLIJST ============================
+   Het bestand wordt in de browser uitgelezen en nergens heen gestuurd.
+   Niets wordt opgeslagen: na een verversing is de lijst weg.
+   Geen externe library - .xlsx wordt met DecompressionStream uitgepakt. */
+
+const NIET_PERSOON = ["vacature","sme","onbekend","n.v.t.","nvt",""];
+
+async function leesBestand(file){
+  const naam = file.name.toLowerCase();
+  if(naam.endsWith(".csv") || naam.endsWith(".txt")) return parseCsv(await file.text());
+  if(naam.endsWith(".xlsx")) return parseXlsx(await file.arrayBuffer());
+  throw new Error("Alleen .xlsx of .csv");
+}
+
+function parseCsv(tekst){
+  const scheiding = (tekst.split("\n")[0].match(/;/g) || []).length >= (tekst.split("\n")[0].match(/,/g) || []).length ? ";" : ",";
+  return tekst.split(/\r?\n/).filter(r => r.trim()).map(r => {
+    const c = r.split(scheiding).map(x => x.replace(/^"|"$/g, "").trim());
+    return [c[0] || "", c[1] || ""];
+  });
+}
+
+/* --- minimale ZIP-lezer: xlsx is een zip met XML erin --- */
+async function unzip(buf, wanted){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  let eocd = -1;
+  for(let i = u8.length - 22; i >= 0 && i > u8.length - 66000; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error("Geen geldig xlsx-bestand");
+  const aantal = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const uit = {};
+  for(let n = 0; n < aantal; n++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const methode = dv.getUint16(p + 10, true);
+    const compLen = dv.getUint32(p + 20, true);
+    const fnLen = dv.getUint16(p + 28, true);
+    const exLen = dv.getUint16(p + 30, true);
+    const cmLen = dv.getUint16(p + 32, true);
+    const lokaal = dv.getUint32(p + 42, true);
+    const naam = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + fnLen));
+    p += 46 + fnLen + exLen + cmLen;
+    if(!wanted.some(w => naam === w || naam.startsWith(w))) continue;
+    const lfn = dv.getUint16(lokaal + 26, true), lex = dv.getUint16(lokaal + 28, true);
+    const start = lokaal + 30 + lfn + lex;
+    const rauw = u8.subarray(start, start + compLen);
+    uit[naam] = methode === 0 ? rauw : await inflate(rauw);
+  }
+  return uit;
+}
+
+async function inflate(bytes){
+  if(typeof DecompressionStream !== "function") throw new Error("Deze browser kan .xlsx niet uitpakken - sla op als .csv");
+  const ds = new DecompressionStream("deflate-raw");
+  const stream = new Blob([bytes]).stream().pipeThrough(ds);
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function parseXlsx(buf){
+  const files = await unzip(buf, ["xl/sharedStrings.xml", "xl/worksheets/sheet1.xml"]);
+  const dec = new TextDecoder();
+  const dp = new DOMParser();
+  let gedeeld = [];
+  if(files["xl/sharedStrings.xml"]){
+    const doc = dp.parseFromString(dec.decode(files["xl/sharedStrings.xml"]), "application/xml");
+    gedeeld = [...doc.getElementsByTagName("si")].map(si =>
+      [...si.getElementsByTagName("t")].map(t => t.textContent).join(""));
+  }
+  const blad = files["xl/worksheets/sheet1.xml"];
+  if(!blad) throw new Error("Geen werkblad gevonden in het bestand");
+  const doc = dp.parseFromString(dec.decode(blad), "application/xml");
+  return [...doc.getElementsByTagName("row")].map(row => {
+    const cellen = {};
+    [...row.getElementsByTagName("c")].forEach(c => {
+      const kolom = (c.getAttribute("r") || "").replace(/\d/g, "");
+      const v = c.getElementsByTagName("v")[0];
+      const isTekst = c.getAttribute("t") === "s";
+      let waarde = "";
+      if(c.getAttribute("t") === "inlineStr"){
+        waarde = [...c.getElementsByTagName("t")].map(t => t.textContent).join("");
+      } else if(v){
+        waarde = isTekst ? (gedeeld[+v.textContent] || "") : v.textContent;
+      }
+      cellen[kolom] = waarde.trim();
+    });
+    return [cellen.A || "", cellen.B || ""];
+  }).filter(r => r[0] || r[1]);
+}
+
+async function laadKlantenlijst(file){
+  try{
+    const rijen = await leesBestand(file);
+    const schoon = rijen
+      .filter(r => r[1])
+      .filter(r => !/^(am|account\s*manager|accountmanager)$/i.test(r[0]))
+      .map(r => ({am: r[0] || "", naam: r[1]}));
+    if(!schoon.length) throw new Error("Geen bruikbare rijen gevonden - verwacht kolom A met de accountmanager en kolom B met de accountnaam");
+    state.klanten = schoon;
+    state.klantBestand = file.name;
+    state.ikBen = "";
+    renderStart();
+    toast("<b>" + nl(schoon.length) + "</b> accounts geladen uit " + esc(file.name));
+  }catch(e){
+    toast("Inlezen mislukt: " + esc(e.message));
+  }
+}
+
+
+/* --- naam-matching tegen de klantenlijst ---------------------------------
+   Bedrijfsnamen in exports zijn rommelig: rechtsvormen, accenten, leestekens
+   en in dit bestand ook vraagtekens waar een accent hoorde. We vergelijken
+   daarom op een genormaliseerde vorm, niet op de letterlijke tekst. */
+
+const RECHTSVORM = /\b(bv|nv|ua|cv|vof|gmbh|ag|ltd|limited|inc|plc|sa|sarl|sas|kg|oy|ab|as)\b/g;
+
+function norm(x){
+  return String(x).toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/\?/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(RECHTSVORM, " ")
+    .replace(/\s+/g, " ").trim();
+}
+
+function matchScore(qn, kn){
+  if(!qn || !kn) return 0;
+  if(qn === kn) return 100;
+  if(kn.startsWith(qn)) return 90;
+  if(kn.includes(qn)) return 78;
+  /* spaties negeren: wie "post nl" typt bedoelt "PostNL" */
+  const qs = qn.replace(/ /g, ""), ks = kn.replace(/ /g, "");
+  if(qs === ks) return 96;
+  if(ks.startsWith(qs)) return 87;
+  if(qs.length >= 5 && ks.includes(qs)) return 74;
+  const a = qn.split(" "), b = new Set(kn.split(" "));
+  const gedeeld = a.filter(t => t.length > 2 && b.has(t)).length;
+  if(!gedeeld) return 0;
+  return Math.round(62 * (2 * gedeeld) / (a.length + b.size));
+}
+const matchLabel = sc => sc >= 100 ? "exact" : sc >= 70 ? "waarschijnlijk" : "mogelijk";
+
+function zoekKlanten(term, limiet){
+  const qn = norm(term);
+  if(qn.length < 2) return [];
+  const per = new Map();
+  state.klanten.forEach(k => {
+    const sc = matchScore(qn, norm(k.naam));
+    if(sc < 35) return;
+    const bestaand = per.get(k.naam);
+    if(bestaand){ bestaand.rijen.push(k); return; }
+    per.set(k.naam, {naam:k.naam, am:k.am, score:sc, rijen:[k]});
+  });
+  return [...per.values()].sort((a, b) => b.score - a.score || a.naam.length - b.naam.length)
+    .slice(0, limiet || 6);
+}
+
+function amStats(){
+  const per = new Map();
+  state.klanten.forEach(k => per.set(k.am, (per.get(k.am) || 0) + 1));
+  return [...per.entries()].sort((a, b) => b[1] - a[1]);
+}
+function isPersoon(am){ return !NIET_PERSOON.includes(String(am).trim().toLowerCase()); }
+function amChip(am){
+  if(!isPersoon(am)) return `<span class="am-chip leeg">${esc(am) || "geen AM"}</span>`;
+  const mij = state.ikBen && am === state.ikBen;
+  return `<span class="am-chip ${mij ? "mij" : ""}">${mij ? "van jou" : esc(am)}</span>`;
+}
+
+function klantenlijstHtml(){
+  if(!state.klanten.length){
+    return `<div class="kl">
+      <div class="kl-top">
+        <h3>Klantenlijst</h3>
+        <p>Laad je eigen export (.xlsx of .csv) met de accountmanager in kolom A en de accountnaam in kolom B.
+           Het bestand wordt in je browser uitgelezen, gaat nergens heen en wordt niet opgeslagen.</p>
+        <span class="kl-file"><button class="btn btn-sm btn-primary">Bestand kiezen</button>
+          <input type="file" id="kl-in" accept=".xlsx,.csv,.txt" aria-label="Klantenlijst kiezen"></span>
+      </div>
+    </div>`;
+  }
+  const stats = amStats();
+  const personen = stats.filter(x => isPersoon(x[0]));
+  const zonder = stats.filter(x => !isPersoon(x[0])).reduce((a, b) => a + b[1], 0);
+  const raar = state.klanten.filter(k => k.naam.includes("?")).length;
+  const mijn = state.ikBen ? state.klanten.filter(k => k.am === state.ikBen).length : 0;
+  return `<div class="kl">
+    <div class="kl-top">
+      <h3>Klantenlijst geladen</h3>
+      <p>${esc(state.klantBestand)} &middot; alleen in het geheugen, weg na een verversing</p>
+      <button class="btn btn-sm" id="kl-clear">Wissen</button>
+    </div>
+    <div class="kl-stat">
+      <div><b>${nl(state.klanten.length)}</b> accounts</div>
+      <div><b>${personen.length}</b> accountmanagers</div>
+      <div><b>${nl(zonder)}</b> zonder AM</div>
+      ${state.ikBen ? `<div><b>${nl(mijn)}</b> van jou</div>` : ""}
+    </div>
+    <div class="kl-mij">
+      <label for="kl-mij">Wie ben jij?</label>
+      <select id="kl-mij">
+        <option value="">&mdash; kies je naam &mdash;</option>
+        ${personen.map(([n, c]) => `<option value="${esc(n)}" ${n === state.ikBen ? "selected" : ""}>${esc(n)} (${c})</option>`).join("")}
+      </select>
+    </div>
+    ${raar ? `<div class="kl-warn"><b>Let op:</b> ${nl(raar)} accountnamen bevatten een vraagteken op de plek van een
+      letter met accent (bijvoorbeeld &ldquo;Co?peratie&rdquo;). Dat is een tekensetfout in de export zelf, niet in deze
+      weergave &mdash; exporteer als UTF-8 om het bij de bron op te lossen.</div>` : ""}
+  </div>`;
+}
+
+function bindKlantenlijst(){
+  const inp = $("#kl-in");
+  if(inp) inp.onchange = e => { if(e.target.files[0]) laadKlantenlijst(e.target.files[0]); };
+  const clr = $("#kl-clear");
+  if(clr) clr.onclick = () => { state.klanten = []; state.klantBestand = ""; state.ikBen = ""; renderStart(); toast("Klantenlijst gewist"); };
+  const sel = $("#kl-mij");
+  if(sel) sel.onchange = e => { state.ikBen = e.target.value; renderStart(); };
+}
+
+
+/* ============================ API-KOPPELINGEN ============================
+   Werkt alleen als de lokale server draait (lokaal/server.mjs). Die houdt de
+   sleutels vast; de browser krijgt ze nooit te zien. In de gepubliceerde versie
+   bestaat /api/health niet en blijft dit blok netjes uitgeschakeld. */
+
+async function checkApi(){
+  /* bij een lokaal geopend bestand bestaat er geen server om te bevragen */
+  if(location.protocol === "file:"){ state.api = false; const el = $("#api-blok");
+    if(el) el.innerHTML = apiHtml(); return; }
+  try{
+    const a = await fetch("/api/health", {signal: AbortSignal.timeout(2500)});
+    if(!a.ok) throw new Error("status " + a.status);
+    state.api = await a.json();
+  }catch(e){
+    state.api = false;
+  }
+  const el = $("#api-blok");
+  if(el) el.innerHTML = apiHtml();
+  bindApi();
+}
+
+function apiHtml(){
+  if(state.api === null) return `<div class="kl"><div class="kl-top"><h3>API-koppelingen</h3>
+    <p>Controleren of de lokale server draait&hellip;</p></div></div>`;
+  if(state.api === false){
+    return `<div class="kl">
+      <div class="kl-top"><h3>API-koppelingen</h3>
+        <p>Geen lokale server gevonden &mdash; je draait de gepubliceerde versie.</p></div>
+      <div class="kl-warn">Company.info en Lusha werken alleen lokaal, omdat een API-sleutel niet in een
+        webpagina hoort. Start de server met <span class="num">node lokaal/server.mjs</span> en open
+        <span class="num">http://127.0.0.1:4321</span>. Zie <span class="num">lokaal/README.md</span>.</div>
+    </div>`;
+  }
+  const bronnen = state.api.bronnen || {};
+  const klaar = Object.values(bronnen).filter(b => b.sleutelIngesteld).length;
+  return `<div class="kl">
+    <div class="kl-top"><h3>API-koppelingen</h3>
+      <p>Lokale server actief &middot; ${klaar} van ${Object.keys(bronnen).length} sleutels ingesteld</p></div>
+    <div style="margin-top:11px">
+      ${Object.entries(bronnen).map(([k, b]) => `<div class="api-bron">
+        <b>${esc(b.naam)}</b>
+        <span class="num" style="color:var(--ink-3); font-size:11.5px">${esc(b.header)}</span>
+        ${b.sleutelIngesteld
+          ? `<span class="api-ok">ingesteld (${b.sleutelLengte} tekens)</span>`
+          : `<span class="api-nee">ontbreekt</span>`}
+      </div>`).join("")}
+    </div>
+    <div class="api-form">
+      <select id="api-bron" aria-label="Bron">
+        ${Object.entries(bronnen).map(([k, b]) => `<option value="${k}">${esc(b.naam)}</option>`).join("")}
+      </select>
+      <select id="api-methode" aria-label="Methode"><option>GET</option><option>POST</option></select>
+      <input id="api-pad" placeholder="pad, bijv. v3/companies/prospecting" aria-label="Pad">
+      <button class="btn btn-sm btn-primary" id="api-doe">Aanroepen</button>
+    </div>
+    <textarea class="api-body" id="api-json" placeholder='JSON-body voor POST, bijvoorbeeld {"pages":{"page":0,"size":5}}' aria-label="JSON-body"></textarea>
+    <div id="api-uit" hidden></div>
+    <div class="kl-warn">Nog geen eindpunten bekend voor Company.info. Zoek ze op via
+      <span class="num">docs.company.info/llms.txt</span> en probeer ze hier uit &mdash; wat werkt, bouwen we in.</div>
+  </div>`;
+}
+
+function toonApiUit(tekst){
+  /* alleen de uitvoer verversen - het hele paneel opnieuw tekenen wist het
+     ingevulde pad en de JSON-body, en dat moet je dan elke keer overtypen */
+  const el = $("#api-uit");
+  if(!el) return;
+  el.hidden = !tekst;
+  el.className = "api-uit" + (tekst.startsWith("FOUT") ? " fout" : "");
+  el.textContent = tekst;
+}
+
+function bindApi(){
+  const knop = $("#api-doe");
+  if(!knop) return;
+  knop.onclick = async () => {
+    const bron = $("#api-bron").value, methode = $("#api-methode").value;
+    const pad = $("#api-pad").value.trim().replace(/^\/+/, "");
+    const ruwe = $("#api-json").value.trim();
+    if(!pad){ toast("Vul een pad in"); return; }
+    knop.disabled = true;
+    toonApiUit("Bezig…");
+    try{
+      const opties = {method: methode, signal: AbortSignal.timeout(25000)};
+      if(methode === "POST" && ruwe){
+        JSON.parse(ruwe);                       /* vroeg falen bij onjuiste JSON */
+        opties.body = ruwe;
+        opties.headers = {"content-type":"application/json"};
+      }
+      const a = await fetch("/api/" + bron + "/" + pad, opties);
+      const tekst = await a.text();
+      let net = tekst;
+      try{ net = JSON.stringify(JSON.parse(tekst), null, 2); }catch(e){ /* geen JSON, toon ruw */ }
+      toonApiUit((a.ok ? "" : "FOUT ") + a.status + " " + a.statusText + "\n\n" + net.slice(0, 4000));
+    }catch(e){
+      toonApiUit("FOUT " + (e instanceof SyntaxError ? "de JSON-body klopt niet: " + e.message : e.message));
+    }
+    knop.disabled = false;
+  };
+}
+
+/* ============================ START VIEW ============================ */
+
+function renderStart(){
+  const sl = state.shortlist.map(byId).filter(Boolean);
+  $("#view-start").innerHTML = `
+    <div class="kicker">Gespreksvoorbereiding</div>
+    <h1 class="h-start">Van bedrijfsnaam naar<br>verstuurde mail.</h1>
+    <p class="lede">Zoek een prospect en krijg de concernstructuur, onze positie, de actuele signalen
+      en de contactpersonen op één scherm. Selecteer daarna wie u wilt benaderen en de mails staan klaar.</p>
+
+    <div class="sec" style="margin-top:22px">
+      <div class="search-shell">
+        <div class="search-box">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+          <input id="q" type="text" autocomplete="off" spellcheck="false"
+                 placeholder="Zoek op bedrijfsnaam, plaats of KvK-nummer&hellip;" aria-label="Zoek een prospect">
+        </div>
+        <div id="res" hidden></div>
+      </div>
+      ${klantenlijstHtml()}
+      <div id="api-blok">${apiHtml()}</div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head">
+        <h2 class="sec-title">Uitgewerkte dossiers</h2>
+        <span class="src live">Company.info</span><span class="src live">Lusha</span><span class="src live">Klantenlijst</span>
+      </div>
+      <div class="grid-cards">
+        ${PROSPECTS.map(p => {
+          const t = telling(p.tree);
+          return `<button class="card pcard" data-open="${p.id}">
+            <div>
+              <div class="pcard-name">${p.kort}</div>
+              <div class="pcard-meta">${p.branche} &middot; ${p.plaats} &middot; ${nl(p.mdw)} mdw</div>
+            </div>
+            <div class="pcard-why">${p.waarom}</div>
+            <div class="pcard-foot">
+              ${pillHtml(p.status)}
+              <span class="pcard-meta" title="klant / deels klant / witte vlek">
+                <span class="dot s-klant"></span> ${t.klant} &nbsp;
+                <span class="dot s-deels"></span> ${t.deels} &nbsp;
+                <span class="dot s-wit"></span> ${t.wit}
+              </span>
+            </div>
+          </button>`;
+        }).join("")}
+      </div>
+    </div>
+
+    ${sl.length ? `<div class="sec" id="sl-sec">
+      <div class="sec-head"><h2 class="sec-title">Mijn shortlist</h2>
+        <span class="src">Alleen deze sessie</span></div>
+      <div class="grid-cards">
+        ${sl.map(p => `<button class="card pcard" data-open="${p.id}">
+          <div>
+            <div class="pcard-name">${p.kort}</div>
+            <div class="pcard-meta">${p.plaats} &middot; ${nl(p.mdw)} mdw</div>
+          </div>
+          <div class="pcard-why">${verstuurdTekst(p)}</div>
+          <div class="pcard-foot">${pillHtml(p.status)}</div>
+        </button>`).join("")}
+      </div>
+    </div>` : ""}
+  `;
+
+  bindKlantenlijst();
+  bindApi();
+  if(state.api === null) checkApi();
+  const q = $("#q");
+  q.addEventListener("input", () => zoek(q.value));
+  q.addEventListener("focus", () => { if(q.value) zoek(q.value); });
+  document.addEventListener("click", e => {
+    if(!e.target.closest(".search-shell")) { const r = $("#res"); if(r) r.hidden = true; }
+  });
+}
+
+function verstuurdTekst(p){
+  const s = state.sent[p.id] || {};
+  const n = Object.keys(s).length;
+  return n ? `<b>${n}</b> van ${p.dmu.length} contactpersonen benaderd` : "Nog niemand benaderd";
+}
+
+function zoek(term){
+  const res = $("#res");
+  const t = deEnt(term).trim().toLowerCase();
+  if(!t){ res.hidden = true; return; }
+  const hits = [];
+  PROSPECTS.forEach(p => {
+    const hay = deEnt(p.naam + " " + p.kort + " " + p.plaats + " " + p.kvk + " " + p.branche).toLowerCase();
+    if(hay.includes(t)) hits.push({full:p});
+  });
+  STUBS.forEach(s => {
+    if((s[0] + " " + s[1] + " " + s[3]).toLowerCase().includes(t)) hits.push({stub:s});
+  });
+  zoekKlanten(term, 6).forEach(k => hits.push({klant:k}));
+  res.hidden = false;
+  res.className = "results";
+  if(!hits.length){
+    res.innerHTML = `<div class="empty-res">Geen resultaat voor &ldquo;${esc(term)}&rdquo;.</div>`;
+    return;
+  }
+  res.innerHTML = hits.slice(0,12).map(h => {
+    if(h.full){
+      const p = h.full;
+      return `<button class="result" data-open="${p.id}">
+        <span class="dot s-${p.status}"></span>
+        <span class="result-main">
+          <span class="result-name">${p.naam}</span>
+          <span class="result-meta">KvK ${p.kvk} &middot; ${p.plaats} &middot; ${nl(p.mdw)} mdw &middot; ${p.branche}</span>
+        </span>
+        <span class="src live">volledig</span>
+      </button>`;
+    }
+    if(h.klant){
+      const k = h.klant;
+      return `<button class="result" data-klant="${esc(k.naam)}">
+        <span class="dot" style="background:var(--accent)"></span>
+        <span class="result-main">
+          <span class="result-name">${esc(k.naam)}</span>
+          <span class="result-meta">Uit je klantenlijst &middot; match ${matchLabel(k.score)}</span>
+        </span>
+        ${amChip(k.am)}
+      </button>`;
+    }
+    const s = h.stub;
+    return `<button class="result stub" data-stub="${esc(s[0])}">
+      <span class="dot" style="background:var(--ink-3)"></span>
+      <span class="result-main">
+        <span class="result-name">${s[0]}</span>
+        <span class="result-meta">${s[1]} &middot; ${s[2]} mdw &middot; ${s[3]}</span>
+      </span>
+      <span class="src">beperkt</span>
+    </button>`;
+  }).join("");
+}
+
+/* ============================ DOSSIER ============================ */
+
+function openDossier(id){
+  state.prospect = byId(id);
+  state.path = [];
+  state.view = "dossier";
+  state.sel = [];
+  renderDossier();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+
+function renderDossier(){
+  const p = state.prospect;
+  const root = p.tree;
+  const here = nodeAt(root, state.path);
+  const t = telling(here);
+  const arrHier = (() => { let s = 0; walk(here, n => s += n.arr); return s; })();
+  const actief = t.klant + t.deels;
+  const opShortlist = state.shortlist.includes(p.id);
+
+  const crumbs = [];
+  crumbs.push(`<button data-path="">${root.naam}</button>`);
+  for(let i = 0; i < state.path.length; i++){
+    const n = nodeAt(root, state.path.slice(0, i+1));
+    crumbs.push(`<span>&rsaquo;</span>`);
+    if(i === state.path.length - 1) crumbs.push(`<span style="color:var(--ink)">${n.naam}</span>`);
+    else crumbs.push(`<button data-path="${state.path.slice(0,i+1).join(",")}">${n.naam}</button>`);
+  }
+
+  $("#view-dossier").innerHTML = `
+    <div class="crumbs">
+      <button id="back-start">Zoeken</button><span>&rsaquo;</span>${crumbs.join("")}
+    </div>
+
+    <div class="card dos-head">
+      <div class="dos-head-main">
+        <h1 class="dos-name">${here.naam}</h1>
+        <div class="dos-facts">
+          <span><b>KvK</b> <span class="num">${state.path.length ? "&mdash;" : p.kvk}</span></span>
+          <span><b>Plaats</b> ${here.plaats}</span>
+          <span><b>Medewerkers</b> <span class="num">${nl(here.mdw)}</span></span>
+          <span><b>SBI</b> ${p.sbi}</span>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px; align-items:flex-end">
+        ${pillHtml(here.status)}
+        <div class="dos-actions">
+          <button class="btn btn-sm" id="btn-sl">${opShortlist ? "&check; Op shortlist" : "+ Shortlist"}</button>
+          <button class="btn btn-sm" id="btn-vs">Vragenset</button>
+          <button class="btn btn-sm btn-primary" id="btn-studio">Stel mails op</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div>
+        <div class="sec" style="margin-top:0">
+          <div class="sec-head"><h2 class="sec-title">Concernstructuur</h2>
+            <span class="src live">Company.info</span><span class="src live">Klantenlijst</span></div>
+          <div class="card tree" id="tree">${treeHtml(root, [])}</div>
+        </div>
+
+      </div>
+
+      <div>
+        <div class="sec" style="margin-top:0">
+          <div class="sec-head"><h2 class="sec-title">Onze positie</h2>
+            <span class="src live">Klantenlijst</span></div>
+          <div class="card pos">
+            <div class="pos-row">
+              <div class="pos-k">Jaaromzet (ARR)</div>
+              <div class="pos-v big num">${arrHier ? eur(arrHier) : "€ 0"}</div>
+            </div>
+            <div class="pos-row">
+              <div class="pos-k">Actieve entiteiten</div>
+              <div class="pos-v num">${actief} <span style="color:var(--ink-3); font-weight:400">/ ${t.totaal}</span></div>
+            </div>
+            <div class="pos-row">
+              <div class="pos-k">Contract</div>
+              <div class="pos-v" style="font-size:13px; text-align:right; max-width:60%">${p.contract}</div>
+            </div>
+
+            <div style="margin-top:14px">
+              <div class="pos-k" style="font-size:12px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:600">Dekking per entiteit</div>
+              ${barHtml(t)}
+              <div class="legend">
+                <span><span class="dot s-klant"></span> Klant <b class="num">${t.klant}</b></span>
+                <span><span class="dot s-deels"></span> Deels <b class="num">${t.deels}</b></span>
+                <span><span class="dot s-wit"></span> Witte vlek <b class="num">${t.wit}</b></span>
+              </div>
+            </div>
+          </div>
+          ${todoHtml(p)}
+        </div>
+
+        <div class="sec">
+          <div class="sec-head"><h2 class="sec-title">Haakjes &amp; signalen</h2>
+            <span class="src live">Company.info</span><span class="src live">TenderNed</span><span class="src live">CRM</span></div>
+          <div class="card sig">
+            ${p.signalen.map(s => `<div class="sig-item ${s.hot ? "hot" : ""}">
+              <div class="sig-date num">${s.d}</div>
+              <div class="sig-body">
+                <div class="sig-tag">${s.t}</div>
+                <div class="sig-text">${s.tekst}</div>
+                <div class="sig-src">${s.bron}</div>
+              </div>
+            </div>`).join("")}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><h2 class="sec-title">Beslissers &amp; be&iuml;nvloeders (DMU)</h2>
+        <span class="src live">Lusha</span><span class="src live">LinkedIn</span></div>
+      <div class="dmu-bar">
+        <p id="sel-info">Vink de personen aan die u wilt benaderen &mdash; u krijgt per persoon een eigen mail.</p>
+        <button class="btn btn-sm" id="btn-all">Alles selecteren</button>
+        <button class="btn btn-sm btn-primary" id="btn-studio2" disabled>Stel mails op</button>
+      </div>
+      <div class="dmu-grid">
+        ${p.dmu.map(d => personHtml(p, d)).join("")}
+      </div>
+    </div>
+  `;
+
+  bindDossier();
+}
+
+function barHtml(t){
+  const order = [["klant", t.klant], ["deels", t.deels], ["wit", t.wit]];
+  return '<div class="bar" role="img" aria-label="' +
+    t.klant + ' entiteiten klant, ' + t.deels + ' deels klant, ' + t.wit + ' witte vlek">' +
+    order.filter(o => o[1] > 0).map(([k, v]) => {
+      const pct = (v / t.totaal) * 100;
+      return `<div class="bar-seg seg-${k}" style="flex:${v}">${pct >= 14 ? `<span>${v}</span>` : ""}</div>`;
+    }).join("") + "</div>";
+}
+
+function todoHtml(p){
+  const s = state.sent[p.id] || {};
+  const keys = Object.keys(s);
+  if(!keys.length) return "";
+  return `<div class="todo">
+    <h4>Opvolgen</h4>
+    <ul>${keys.map(k => {
+      const d = p.dmu.find(x => x.id === k);
+      return d ? `<li><b>${d.naam}</b> &mdash; mail verstuurd, herinnering over 4 dagen</li>` : "";
+    }).join("")}</ul>
+  </div>`;
+}
+
+function treeHtml(node, path){
+  const isHere = path.join(",") === state.path.join(",");
+  const kids = node.kinderen || [];
+  return `<ul><li>
+    <button class="node ${isHere ? "here" : ""}" data-path="${path.join(",")}">
+      <span class="twist ${kids.length ? "" : "leaf"}">${kids.length ? "&minus;" : ""}</span>
+      <span class="dot s-${node.status}"></span>
+      <span class="node-mid">
+        <span class="node-name">${node.naam}</span><br>
+        <span class="node-meta">${node.plaats} &middot; ${nl(node.mdw)} mdw${node.note ? " &middot; " + node.note : ""}</span>
+      </span>
+      ${node.arr ? `<span class="node-arr">${eur(node.arr)}</span>` : ""}
+    </button>
+    ${kids.length ? kids.map((k, i) => treeHtml(k, path.concat(i))).join("") : ""}
+  </li></ul>`;
+}
+
+function personHtml(p, d){
+  const sent = (state.sent[p.id] || {})[d.id];
+  const sel = state.sel.includes(d.id);
+  return `<div class="person ${sel ? "sel" : ""}" data-person="${d.id}">
+    <div class="person-top">
+      <div class="avatar">${initialen(d.naam)}</div>
+      <div style="min-width:0; flex:1">
+        <div class="person-name">${d.naam}</div>
+        <div class="person-rol">${d.rol}</div>
+      </div>
+    </div>
+    <div><span class="tag ${d.klasse === "beslisser" ? "beslisser" : d.klasse === "poortwachter" ? "poortwachter" : ""}">${d.label}</span></div>
+    <div class="person-contact">${d.mail}<br>${d.tel}</div>
+    <div class="pcard-meta" style="font-size:12px">${d.extra}</div>
+    <div class="person-foot">
+      <label class="pick"><input type="checkbox" ${sel ? "checked" : ""} data-pick="${d.id}"> Benaderen</label>
+      <span class="status-line ${sent ? "sent" : ""}"><span class="dot"></span>${sent ? "Verstuurd" : "Nog niet benaderd"}</span>
+    </div>
+  </div>`;
+}
+
+function bindDossier(){
+  $("#back-start").onclick = gotoStart;
+  document.querySelectorAll(".crumbs [data-path]").forEach(b => {
+    b.onclick = () => { state.path = b.dataset.path ? b.dataset.path.split(",").map(Number) : []; renderDossier(); };
+  });
+  document.querySelectorAll("#tree .node").forEach(b => {
+    b.onclick = () => { state.path = b.dataset.path ? b.dataset.path.split(",").map(Number) : []; renderDossier(); window.scrollTo({top:0, behavior:"smooth"}); };
+  });
+  $("#btn-sl").onclick = () => {
+    const id = state.prospect.id;
+    const i = state.shortlist.indexOf(id);
+    if(i >= 0){ state.shortlist.splice(i,1); toast("Van shortlist gehaald"); }
+    else { state.shortlist.push(id); toast("Op shortlist gezet"); }
+    syncCount(); renderDossier();
+  };
+  $("#btn-vs").onclick = openVragenset;
+  $("#btn-studio").onclick = () => openStudio(true);
+  $("#btn-studio2").onclick = () => openStudio(false);
+  $("#btn-all").onclick = () => {
+    const all = state.prospect.dmu.map(d => d.id);
+    state.sel = state.sel.length === all.length ? [] : all;
+    renderDossier();
+  };
+  document.querySelectorAll("[data-pick]").forEach(cb => {
+    cb.onchange = () => {
+      const id = cb.dataset.pick;
+      const i = state.sel.indexOf(id);
+      if(i >= 0) state.sel.splice(i,1); else state.sel.push(id);
+      renderDossier();
+    };
+  });
+  syncSel();
+}
+
+function syncSel(){
+  const n = state.sel.length;
+  const info = $("#sel-info"), b = $("#btn-studio2");
+  if(!info) return;
+  info.innerHTML = n
+    ? `<b>${n}</b> ${n === 1 ? "persoon" : "personen"} geselecteerd &mdash; klaar om mails op te stellen.`
+    : "Vink de personen aan die u wilt benaderen &mdash; u krijgt per persoon een eigen mail.";
+  b.disabled = n === 0;
+}
+
+/* ============================ OUTREACH STUDIO ============================ */
+
+function fill(str, p, d){
+  const t = telling(p.tree);
+  return str
+    .replace(/\{kort\}/g, p.kort)
+    .replace(/\{bedrijf\}/g, p.naam)
+    .replace(/\{entiteiten\}/g, t.totaal)
+    .replace(/\{plaats\}/g, p.plaats)
+    .replace(/\{mdw\}/g, nl(p.mdw));
+}
+
+function mailVoor(p, d, hoek, afzender){
+  const voornaam = deEnt(d.naam).split(" ")[0];
+  const opener = p.opener[KLASSE_OPENER[d.klasse]];
+  const kern = KERN[hoek][d.klasse];
+  const vraag = VRAAG[d.klasse];
+  const naam = afzender.trim() || "[uw naam]";
+  const body = [
+    "Beste " + voornaam + ",",
+    "",
+    deEnt(fill(opener, p, d)),
+    "",
+    deEnt(fill(kern, p, d)),
+    "",
+    deEnt(fill(vraag, p, d)),
+    "",
+    "Met vriendelijke groet,",
+    naam,
+    "Accountmanager Grootzakelijk"
+  ].join("\n");
+  return {
+    onderwerp: deEnt(fill(ONDERWERP[hoek][d.klasse], p, d)),
+    body: body
+  };
+}
+
+function draftKey(p, d, hoek){ return p.id + "|" + d.id + "|" + hoek; }
+
+function openStudio(useAll){
+  const p = state.prospect;
+  if(useAll && !state.sel.length){
+    state.sel = p.dmu.filter(d => d.klasse === "beslisser" || d.klasse === "it").map(d => d.id);
+  }
+  state.tab = 0;
+  renderStudio();
+}
+
+function renderStudio(){
+  const p = state.prospect;
+  const people = state.sel.map(id => p.dmu.find(d => d.id === id)).filter(Boolean);
+  if(!people.length){ closeOverlay(); return; }
+  const d = people[Math.min(state.tab, people.length - 1)];
+  const key = draftKey(p, d, state.hoek);
+  const base = mailVoor(p, d, state.hoek, state.afzender);
+  const draft = state.drafts[key] || base;
+  const sent = (state.sent[p.id] || {})[d.id];
+
+  $("#ov").hidden = false;
+  $("#ov").className = "overlay";
+  $("#ov").innerHTML = `
+    <div class="sheet" role="dialog" aria-label="Outreach Studio">
+      <div class="sheet-head">
+        <div style="flex:1; min-width:0">
+          <h2>Outreach Studio</h2>
+          <p>${p.naam} &middot; aanleiding: ${p.aanleiding}</p>
+        </div>
+        <button class="x" id="ov-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="studio">
+        <div class="studio-side">
+          <div class="side-lab">Invalshoek</div>
+          <div class="angle">
+            ${HOEKEN.map(h => `<button data-hoek="${h.id}" class="${h.id === state.hoek ? "on" : ""}">${h.naam}</button>`).join("")}
+          </div>
+          <label class="field" for="afz"><span>Afzender</span>
+            <input id="afz" type="text" value="${esc(state.afzender)}" placeholder="Uw naam"></label>
+          <div class="side-lab">Ontvangers</div>
+          <div style="display:flex; flex-direction:column; gap:6px">
+            ${p.dmu.map(x => `<label class="pick">
+              <input type="checkbox" data-spick="${x.id}" ${state.sel.includes(x.id) ? "checked" : ""}>
+              ${x.naam.split(" ")[0]} &mdash; ${x.label}</label>`).join("")}
+          </div>
+        </div>
+        <div class="studio-main">
+          <div class="tabs">
+            ${people.map((x, i) => {
+              const s = (state.sent[p.id] || {})[x.id];
+              return `<button class="tab ${i === state.tab ? "on" : ""}" data-tab="${i}">
+                <span class="dot" style="background:${s ? "var(--green)" : "var(--ink-3)"}"></span>${x.naam}</button>`;
+            }).join("")}
+          </div>
+          <input class="mail-subj" id="subj" value="${esc(draft.onderwerp)}" aria-label="Onderwerp">
+          <textarea class="mail-body" id="body" aria-label="Mailtekst">${esc(draft.body)}</textarea>
+          <div class="mail-foot">
+            <button class="btn btn-primary" id="do-copy">Kopieer mail</button>
+            <button class="btn" id="do-sent">${sent ? "&check; Gemarkeerd als verstuurd" : "Markeer als verstuurd"}</button>
+            <button class="btn" id="do-reset">Herstel voorbeeldtekst</button>
+            <span class="hint">Toon en inhoud passen zich aan op de rol van <b>${d.naam}</b> (${d.label}).</span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+
+  $("#ov-close").onclick = closeOverlay;
+  $("#ov").onclick = e => { if(e.target.id === "ov") closeOverlay(); };
+  document.querySelectorAll("[data-hoek]").forEach(b => {
+    b.onclick = () => { state.hoek = b.dataset.hoek; renderStudio(); };
+  });
+  document.querySelectorAll("[data-tab]").forEach(b => {
+    b.onclick = () => { stash(); state.tab = +b.dataset.tab; renderStudio(); };
+  });
+  document.querySelectorAll("[data-spick]").forEach(cb => {
+    cb.onchange = () => {
+      stash();
+      const id = cb.dataset.spick;
+      const i = state.sel.indexOf(id);
+      if(i >= 0) state.sel.splice(i,1); else state.sel.push(id);
+      state.tab = 0;
+      if(state.sel.length) renderStudio(); else { closeOverlay(); renderDossier(); }
+    };
+  });
+  $("#afz").oninput = e => { state.afzender = e.target.value; };
+  $("#afz").onchange = () => { delete state.drafts[key]; renderStudio(); };
+  $("#do-copy").onclick = () => copy($("#subj").value + "\n\n" + $("#body").value, "Mail gekopieerd &mdash; plak hem in Outlook");
+  $("#do-reset").onclick = () => { delete state.drafts[key]; renderStudio(); toast("Voorbeeldtekst hersteld"); };
+  $("#do-sent").onclick = () => {
+    state.sent[p.id] = state.sent[p.id] || {};
+    if(state.sent[p.id][d.id]) delete state.sent[p.id][d.id];
+    else { state.sent[p.id][d.id] = new Date().toISOString(); toast("Gemarkeerd als verstuurd &mdash; herinnering over 4 dagen"); }
+    stash(); renderStudio();
+  };
+
+  function stash(){
+    const s = $("#subj"), b = $("#body");
+    if(s && b) state.drafts[key] = {onderwerp:s.value, body:b.value};
+  }
+}
+
+/* ============================ BRIEFING ============================ */
+
+function zichtbareVragen(p){
+  return state.rolFilter === "alle"
+    ? p.vragen
+    : p.vragen.filter(q => q.r.includes(state.rolFilter));
+}
+
+function openVragenset(){
+  const p = state.prospect;
+  const t = telling(p.tree);
+  const lijst = zichtbareVragen(p);
+  const rolLabel = state.rolFilter === "alle" ? "alle rollen" : deEnt(ROLNAAM[state.rolFilter]).toLowerCase();
+
+  $("#ov").hidden = false;
+  $("#ov").className = "overlay";
+  $("#ov").innerHTML = `
+    <div class="sheet" role="dialog" aria-label="Vragenset">
+      <div class="sheet-head">
+        <div style="flex:1; min-width:0"><h2>Vragenset</h2>
+          <p>Munitie voor het gesprek &mdash; elke vraag met de aanleiding erbij</p></div>
+        <button class="x" id="ov-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="brief">
+        <h3>${p.naam}</h3>
+        <div class="brief-meta">KvK ${p.kvk} &middot; ${p.plaats} &middot; ${nl(p.mdw)} medewerkers &middot;
+          ${LABEL[p.status]} &middot; ${t.klant + t.deels} van ${t.totaal} entiteiten actief</div>
+
+        <div class="vs-filter" role="group" aria-label="Filter op rol">
+          <button data-rol="alle" class="${state.rolFilter === "alle" ? "on" : ""}">Alle rollen</button>
+          ${Object.keys(ROLNAAM).map(k => `<button data-rol="${k}" class="${state.rolFilter === k ? "on" : ""}">${ROLNAAM[k]}</button>`).join("")}
+        </div>
+        <div class="vs-count">${lijst.length} van ${p.vragen.length} vragen &middot; ${rolLabel}</div>
+
+        <div class="vs-list">
+          ${lijst.length ? lijst.map((q, i) => `<div class="vraag">
+            <div class="vraag-n">${i + 1}</div>
+            <div class="vraag-b">
+              <div class="vraag-t">${q.v}</div>
+              <div class="vraag-w">${q.w}</div>
+              <div class="vraag-r">${q.r.map(k => `<span class="tag ${k === "beslisser" ? "beslisser" : k === "poortwachter" ? "poortwachter" : ""}">${ROLNAAM[k]}</span>`).join("")}</div>
+            </div>
+          </div>`).join("")
+          : `<div class="vs-leeg">Geen vragen voor deze rol. Kies een andere rol of zet het filter op alle rollen.</div>`}
+        </div>
+
+        <div class="mail-foot">
+          <button class="btn btn-primary" id="vs-copy">Kopieer vragen</button>
+          <span class="hint">De zichtbare vragen plus de kerngegevens, als platte tekst voor uw notitieblok of CRM.</span>
+        </div>
+      </div>
+    </div>`;
+
+  $("#ov-close").onclick = closeOverlay;
+  $("#ov").onclick = e => { if(e.target.id === "ov") closeOverlay(); };
+  document.querySelectorAll("[data-rol]").forEach(b => {
+    b.onclick = () => { state.rolFilter = b.dataset.rol; openVragenset(); };
+  });
+  $("#vs-copy").onclick = () => {
+    const plat = x => deEnt(String(x).replace(/<[^>]+>/g, ""));
+    const kop = [
+      plat(p.naam) + " \u2014 gespreksvragen (" + rolLabel + ")",
+      "KvK " + p.kvk + " \u00b7 " + p.plaats + " \u00b7 " + nl(p.mdw) + " medewerkers",
+      plat(LABEL[p.status]) + " \u00b7 " + (t.klant + t.deels) + " van " + t.totaal + " entiteiten actief"
+    ].join("\n");
+    const body = lijst.map((q, i) => (i + 1) + ". " + plat(q.v) + "\n   \u2192 " + plat(q.w)).join("\n\n");
+    copy(kop + "\n\n" + body, lijst.length + " vragen gekopieerd");
+  };
+}
+
+const STAPPEN = [
+  {t:"Naam herkend in je klantenlijst", b:"Klantenlijst (jouw export)", nu:true},
+  {t:"Wie is verantwoordelijk voor dit account", b:"Klantenlijst (jouw export)", nu:true},
+  {t:"Concernstructuur: holding, werkmaatschappijen, vestigingen", b:"Company.info &mdash; vraagt een server met de API-sleutel", nu:false},
+  {t:"Signalen: vacatures, overnames, aanbestedingen, verhuizingen", b:"Company.info en TenderNed &mdash; zelfde koppeling", nu:false},
+  {t:"Contactpersonen en hun rol in de DMU", b:"Lusha <span class=\"num\">/v3/companies/prospecting</span> en <span class=\"num\">/v3/contacts/prospecting</span>", nu:false},
+  {t:"Vragenset op maat", b:"Volgt automatisch uit de structuur en de signalen hierboven", nu:false},
+  {t:"Mails per contactpersoon", b:"Werkt al &mdash; wacht alleen op echte contactpersonen", nu:false}
+];
+
+function toonAccountkaart(naam, zoekterm){
+  const treffer = zoekKlanten(naam, 1)[0] || {naam:naam, am:"", score:0, rijen:[]};
+  /* de match-kwaliteit hoort bij wat de gebruiker t&iacute;kte, niet bij het opnieuw opzoeken */
+  const getypt = (zoekterm || "").trim();
+  const kwaliteit = getypt ? matchScore(norm(getypt), norm(treffer.naam)) : treffer.score;
+  const am = treffer.am;
+  const rijen = state.klanten.filter(k => k.naam === treffer.naam);
+  const amAnders = [...new Set(rijen.map(r => r.am))];
+  const portefeuille = isPersoon(am) ? state.klanten.filter(k => k.am === am).length : 0;
+  const klaar = STAPPEN.filter(x => x.nu).length;
+
+  $("#ov").hidden = false;
+  $("#ov").className = "overlay";
+  $("#ov").innerHTML = `
+    <div class="sheet" style="max-width:660px" role="dialog" aria-label="Accountanalyse">
+      <div class="sheet-head">
+        <div style="flex:1; min-width:0"><h2>Accountanalyse</h2>
+          <p>Naam gecontroleerd tegen je klantenlijst</p></div>
+        <button class="x" id="ov-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="brief">
+        <h3>${esc(treffer.naam)}</h3>
+        <div class="brief-meta">Bron: ${esc(state.klantBestand)}${getypt ? " &middot; je typte &ldquo;" + esc(getypt) + "&rdquo; &middot; match " + matchLabel(kwaliteit) : ""}
+          &middot; alleen in het geheugen</div>
+
+        <div style="margin-top:16px">
+          <div class="pos-row">
+            <div class="pos-k">Accountmanager</div>
+            <div class="pos-v">${isPersoon(am) ? esc(am) : "niet toegewezen &mdash; staat op &ldquo;" + esc(am) + "&rdquo;"}</div>
+          </div>
+          ${state.ikBen ? `<div class="pos-row">
+            <div class="pos-k">Van jou?</div>
+            <div class="pos-v">${am === state.ikBen ? "Ja" : isPersoon(am) ? "Nee &mdash; ligt bij een collega" : "Nee &mdash; nog van niemand"}</div>
+          </div>` : ""}
+          ${portefeuille ? `<div class="pos-row">
+            <div class="pos-k">Portefeuille van ${esc(am)}</div>
+            <div class="pos-v num">${nl(portefeuille)} accounts</div>
+          </div>` : ""}
+        </div>
+
+        ${amAnders.length > 1 ? `<div class="kl-warn">Deze naam staat ${rijen.length}&times; in de lijst, bij
+          ${amAnders.map(esc).join(" en ")}. Dat moet bij de bron worden opgelost.</div>` : ""}
+
+        <div class="sec-head" style="margin:22px 0 4px"><h2 class="sec-title">Analysestappen</h2>
+          <span class="src">${klaar} van ${STAPPEN.length} beschikbaar</span></div>
+        <div>
+          ${STAPPEN.map((x, i) => `<div class="stap">
+            <div class="stap-n">${i + 1}</div>
+            <div class="stap-b">
+              <div class="stap-t">${x.t}</div>
+              <div class="stap-s">${x.b}</div>
+            </div>
+            <div class="stap-st ${x.nu ? "nu" : "wacht"}">${x.nu ? "nu" : "fase 3"}</div>
+          </div>`).join("")}
+        </div>
+
+        <div class="kl-warn" style="background:var(--accent-soft); color:var(--accent)">
+          Stap 3 tot en met 7 kijken naar de <b>structuur</b> van het bedrijf, niet naar omzet &mdash;
+          die gegevens zitten niet in deze lijst. Zie een van de vier demo-dossiers voor hoe die
+          analyse eruitziet zodra de koppelingen er zijn.</div>
+      </div>
+    </div>`;
+  $("#ov-close").onclick = closeOverlay;
+  $("#ov").onclick = e => { if(e.target.id === "ov") closeOverlay(); };
+}
+
+function closeOverlay(){
+  $("#ov").hidden = true;
+  $("#ov").innerHTML = "";
+  if(state.view === "dossier") renderDossier();
+}
+
+/* ============================ NAV ============================ */
+
+function gotoStart(){
+  state.view = "start";
+  state.prospect = null;
+  $("#view-start").hidden = false;
+  $("#view-dossier").hidden = true;
+  renderStart();
+  syncCount();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+function gotoDossier(id){
+  $("#view-start").hidden = true;
+  $("#view-dossier").hidden = false;
+  openDossier(id);
+}
+function syncCount(){ $("#sl-count").textContent = state.shortlist.length; }
+
+document.addEventListener("click", e => {
+  const open = e.target.closest("[data-open]");
+  if(open){ gotoDossier(open.dataset.open); return; }
+  const stub = e.target.closest("[data-stub]");
+  if(stub){ toast("<b>" + stub.dataset.stub + "</b> is in deze demo niet uitgewerkt"); return; }
+  const kl = e.target.closest("[data-klant]");
+  if(kl){ const q = $("#q"); toonAccountkaart(kl.dataset.klant, q ? q.value : ""); return; }
+});
+document.addEventListener("keydown", e => {
+  if(e.key === "Escape" && !$("#ov").hidden) closeOverlay();
+});
+$("#home").onclick = gotoStart;
+$("#home").onkeydown = e => { if(e.key === "Enter" || e.key === " ") { e.preventDefault(); gotoStart(); } };
+$("#btn-shortlist").onclick = () => {
+  gotoStart();
+  setTimeout(() => { const s = $("#sl-sec"); if(s) s.scrollIntoView({behavior:"smooth", block:"start"});
+    else toast("Uw shortlist is nog leeg &mdash; open een dossier en zet het erop"); }, 60);
+};
+
+gotoStart();
+</script>
+
+</body>
+</html>
