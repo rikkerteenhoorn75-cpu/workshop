@@ -51,7 +51,12 @@ Afsluiten doe je door het startervenster te sluiten.
 
 ## Sleutels
 
-Zet ze in `lokaal/.env`. Dat bestand staat in `.gitignore` en komt nooit in de repo.
+**De starter vraagt je Lusha-sleutel de eerste keer zelf.** Plakken, Enter, klaar.
+Hij slaat hem op in `lokaal/.env` met rechten 600 en vraagt er daarna niet meer om.
+Laat je het veld leeg, dan werkt de app gewoon zonder contactpersonen.
+
+Handmatig kan ook: zet ze in `lokaal/.env`. Dat bestand staat in `.gitignore` en
+komt nooit in de repo.
 
 | Variabele | Waar vandaan |
 |---|---|
