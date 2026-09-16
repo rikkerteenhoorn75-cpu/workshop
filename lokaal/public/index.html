@@ -443,6 +443,21 @@ input,textarea,select{font:inherit; color:inherit}
 }
 .api-uit.fout{background:var(--red-soft); color:var(--red); border-color:transparent}
 
+/* lusha-zoeken en onthullen */
+.kosten{font-size:11.5px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.contact{padding:13px 0; border-bottom:1px solid var(--line); display:flex; gap:13px; align-items:flex-start}
+.contact:last-child{border-bottom:none}
+.contact-b{flex:1; min-width:0}
+.contact-n{font-size:14.5px; font-weight:600}
+.contact-f{font-size:12.5px; color:var(--ink-2); margin-top:1px}
+.contact-g{margin-top:7px; display:flex; flex-direction:column; gap:3px}
+.contact-g a,.contact-g span.g{
+  font-family:"IBM Plex Mono",monospace; font-size:12.5px; color:var(--accent);
+  text-decoration:none; word-break:break-all;
+}
+.contact-g a:hover{text-decoration:underline}
+.contact-r{flex:none; display:flex; flex-direction:column; gap:6px; align-items:flex-end}
+
 /* toast */
 .toast{
   position:fixed; left:50%; bottom:26px; transform:translateX(-50%) translateY(8px);
@@ -889,6 +904,7 @@ const state = {
   klanten:[],
   ci:null,
   ciDmu:null,
+  lusha:null,
   ciBezig:false,
   api:null,
   klantBestand:"",
@@ -1765,6 +1781,151 @@ function toonConcern(sleutel){
   };
 }
 
+
+/* ============================ LUSHA: ELK BEDRIJF ============================
+   Zoeken op elke naam, ook buiten de geladen bestanden. Alles loopt via de lokale
+   server; de sleutel komt nooit in de browser. Onthullen kost credits en gebeurt
+   daarom alleen na een klik waarin de prijs staat. */
+
+const lushaKlaar = () => state.api && state.api.bronnen
+  && state.api.bronnen.lusha && state.api.bronnen.lusha.sleutelIngesteld;
+
+async function post(pad, body){
+  const a = await fetch(pad, {method:"POST", headers:{"content-type":"application/json"},
+    body:JSON.stringify(body), signal:AbortSignal.timeout(30000)});
+  const d = await a.json().catch(() => ({fout:"Onleesbaar antwoord"}));
+  if(!a.ok) throw new Error((d.fout || "Fout " + a.status) + (d.hint ? " — " + d.hint : ""));
+  return d;
+}
+
+async function zoekBijLusha(term){
+  state.lusha = {term, bezig:true};
+  toonLusha();
+  try{
+    const d = await post("/api/bedrijven", {naam:term});
+    state.lusha = {term, bedrijven:d.bedrijven || [], gevonden:d.gevonden, bezig:false};
+    if(!state.lusha.bedrijven.length) state.lusha.fout = "Lusha kent geen bedrijf met deze naam in Nederland.";
+  }catch(e){ state.lusha = {term, fout:e.message, bezig:false}; }
+  toonLusha();
+}
+
+async function lushaContacten(bedrijf){
+  state.lusha = {...state.lusha, bedrijf, contacten:null, onthuld:{}, bezig:true};
+  toonLusha();
+  try{
+    const d = await post("/api/dmu", {bedrijf:bedrijf.naam, bedrijfId:bedrijf.id, aantal:25});
+    state.lusha = {...state.lusha, contacten:d.contacten || [], totaal:d.gevonden, bezig:false};
+    if(!d.contacten || !d.contacten.length) state.lusha.fout = "Geen contactpersonen gevonden bij dit bedrijf.";
+  }catch(e){ state.lusha = {...state.lusha, fout:e.message, bezig:false}; }
+  toonLusha();
+}
+
+async function onthul(ids, velden){
+  const kosten = ids.length * (velden.includes("phones") ? 6 : 1);
+  if(!confirm("Dit kost ongeveer " + kosten + " Lusha-credit" + (kosten === 1 ? "" : "s") +
+              " voor " + ids.length + " contact" + (ids.length === 1 ? "" : "en") + ". Doorgaan?")) return;
+  state.lusha = {...state.lusha, bezig:true};
+  toonLusha();
+  try{
+    const d = await post("/api/onthul", {ids, velden});
+    const onthuld = {...(state.lusha.onthuld || {})};
+    (d.contacten || []).forEach(c => { onthuld[c.id] = c; });
+    state.lusha = {...state.lusha, onthuld, bezig:false};
+    toast("Onthuld &mdash; " + (d.credits != null ? d.credits + " credits gebruikt" : "klaar"));
+  }catch(e){ state.lusha = {...state.lusha, fout:e.message, bezig:false}; }
+  toonLusha();
+}
+
+function toonLusha(){
+  const L = state.lusha;
+  if(!L) return;
+  $("#ov").hidden = false;
+  $("#ov").className = "overlay";
+
+  let inhoud;
+  if(L.bedrijf && L.contacten){
+    const onthuld = L.onthuld || {};
+    const nietOnthuld = L.contacten.filter(c => !onthuld[c.id]).map(c => c.id);
+    inhoud = `
+      <h3>${esc(L.bedrijf.naam)}</h3>
+      <div class="brief-meta">${[L.bedrijf.branche, L.bedrijf.plaats, L.bedrijf.domein].filter(Boolean).map(esc).join(" &middot; ")}
+        ${L.totaal != null ? "&middot; " + nl(L.totaal) + " contactpersonen bekend" : ""}</div>
+      <div class="mail-foot" style="margin:16px 0 4px">
+        <button class="btn btn-sm" id="l-terug">&larr; Andere keuze</button>
+        ${nietOnthuld.length ? `<button class="btn btn-sm btn-primary" id="l-mail-alle">
+          E-mail onthullen <span class="kosten">(${nietOnthuld.length} cr)</span></button>
+          <button class="btn btn-sm" id="l-tel-alle">Ook telefoon
+          <span class="kosten">(${nietOnthuld.length * 6} cr)</span></button>` : ""}
+      </div>
+      <div class="vs-list">
+        ${L.contacten.map(c => {
+          const o = onthuld[c.id];
+          return `<div class="contact">
+            <div class="contact-b">
+              <div class="contact-n">${esc(c.naam)}</div>
+              <div class="contact-f">${esc(c.rol || c.afdeling || "")}${c.plaats ? " &middot; " + esc(c.plaats) : ""}</div>
+              ${o ? `<div class="contact-g">
+                ${(o.mails || []).map(m => `<a href="mailto:${esc(m.adres)}">${esc(m.adres)}</a>`).join("")}
+                ${(o.telefoons || []).map(t => `<a href="tel:${esc(t.nummer)}">${esc(t.nummer)}</a>`).join("")}
+                ${o.sinds ? `<span class="g" style="color:var(--ink-3)">in functie sinds ${esc(o.sinds)}</span>` : ""}
+                ${!(o.mails || []).length && !(o.telefoons || []).length
+                  ? `<span class="g" style="color:var(--red)">niets gevonden voor dit contact</span>` : ""}
+              </div>` : ""}
+            </div>
+            <div class="contact-r">
+              <span class="tag ${c.klasse === "beslisser" ? "beslisser" : c.klasse === "poortwachter" ? "poortwachter" : ""}">${esc(c.label)}</span>
+              ${!o ? `<button class="btn btn-sm" data-onthul="${esc(c.id)}">Onthul <span class="kosten">1 cr</span></button>` : ""}
+            </div>
+          </div>`;
+        }).join("")}
+      </div>
+      <div class="kl-warn" style="margin-top:16px">E-mail kost 1 credit per contact, telefoon 5.
+        Deze gegevens blijven in dit venster en worden nergens opgeslagen.</div>`;
+  } else if(L.bedrijven){
+    inhoud = `
+      <h3>${esc(L.term)}</h3>
+      <div class="brief-meta">${L.gevonden != null ? nl(L.gevonden) + " bedrijven gevonden bij Lusha" : ""}</div>
+      <div class="vs-list" style="margin-top:14px">
+        ${L.bedrijven.map((b, i) => `<div class="stap">
+          <div class="stap-b">
+            <div class="stap-t">${esc(b.naam)}</div>
+            <div class="stap-s">${[b.branche, b.plaats, b.omvang ? b.omvang + " medewerkers" : "", b.domein]
+              .filter(Boolean).map(esc).join(" &middot; ")}</div>
+          </div>
+          <button class="btn btn-sm btn-primary" data-lb="${i}">Contactpersonen</button>
+        </div>`).join("")}
+      </div>`;
+  } else {
+    inhoud = `<h3>${esc(L.term)}</h3><div class="vs-leeg">Zoeken bij Lusha&hellip;</div>`;
+  }
+
+  $("#ov").innerHTML = `
+    <div class="sheet" style="max-width:760px" role="dialog" aria-label="Lusha">
+      <div class="sheet-head">
+        <div style="flex:1; min-width:0"><h2>Zoeken bij Lusha</h2>
+          <p>Elk bedrijf, ook buiten je eigen bestanden</p></div>
+        <button class="x" id="ov-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="brief">
+        ${L.fout ? `<div class="kl-warn" style="background:var(--red-soft); color:var(--red)">${esc(L.fout)}</div>` : ""}
+        ${L.bezig ? `<div class="vs-leeg">Bezig&hellip;</div>` : inhoud}
+      </div>
+    </div>`;
+
+  $("#ov-close").onclick = () => { state.lusha = null; closeOverlay(); };
+  $("#ov").onclick = e => { if(e.target.id === "ov"){ state.lusha = null; closeOverlay(); } };
+  document.querySelectorAll("[data-lb]").forEach(b =>
+    b.onclick = () => lushaContacten(state.lusha.bedrijven[+b.dataset.lb]));
+  document.querySelectorAll("[data-onthul]").forEach(b =>
+    b.onclick = () => onthul([b.dataset.onthul], ["emails"]));
+  const t = $("#l-terug");
+  if(t) t.onclick = () => { state.lusha = {...state.lusha, bedrijf:null, contacten:null}; toonLusha(); };
+  const ma = $("#l-mail-alle");
+  if(ma) ma.onclick = () => onthul(state.lusha.contacten.filter(c => !(state.lusha.onthuld || {})[c.id]).map(c => c.id), ["emails"]);
+  const ta = $("#l-tel-alle");
+  if(ta) ta.onclick = () => onthul(state.lusha.contacten.filter(c => !(state.lusha.onthuld || {})[c.id]).map(c => c.id), ["emails","phones"]);
+}
+
 /* ============================ START VIEW ============================ */
 
 function renderStart(){
@@ -1868,10 +2029,24 @@ function zoek(term){
   res.hidden = false;
   res.className = "results";
   if(!hits.length){
-    res.innerHTML = `<div class="empty-res">Geen resultaat voor &ldquo;${esc(term)}&rdquo;.</div>`;
+    res.innerHTML = (lushaKlaar() ? `<button class="result" data-lzoek="${esc(term.trim())}">
+         <span class="dot" style="background:var(--accent)"></span>
+         <span class="result-main">
+           <span class="result-name">Zoek &ldquo;${esc(term.trim())}&rdquo; bij Lusha</span>
+           <span class="result-meta">Niet in je bestanden &mdash; zoek rechtstreeks &middot; 1 credit</span>
+         </span></button>` : "") +
+      `<div class="empty-res">Geen resultaat in je geladen bestanden.</div>`;
     return;
   }
-  res.innerHTML = hits.slice(0,12).map(h => {
+  const lushaRij = lushaKlaar() && term.trim().length >= 2
+    ? `<button class="result" data-lzoek="${esc(term.trim())}">
+         <span class="dot" style="background:var(--accent)"></span>
+         <span class="result-main">
+           <span class="result-name">Zoek &ldquo;${esc(term.trim())}&rdquo; bij Lusha</span>
+           <span class="result-meta">Elk bedrijf, ook buiten je bestanden &middot; 1 credit</span>
+         </span>
+       </button>` : "";
+  res.innerHTML = lushaRij + hits.slice(0,12).map(h => {
     if(h.full){
       const p = h.full;
       return `<button class="result" data-open="${p.id}">
@@ -2489,6 +2664,8 @@ document.addEventListener("click", e => {
   if(open){ gotoDossier(open.dataset.open); return; }
   const stub = e.target.closest("[data-stub]");
   if(stub){ toast("<b>" + stub.dataset.stub + "</b> is in deze demo niet uitgewerkt"); return; }
+  const lz = e.target.closest("[data-lzoek]");
+  if(lz){ zoekBijLusha(lz.dataset.lzoek); return; }
   const ci = e.target.closest("[data-ci]");
   if(ci){
     if(ci.dataset.ci === "concern") toonConcern(ci.dataset.sleutel);

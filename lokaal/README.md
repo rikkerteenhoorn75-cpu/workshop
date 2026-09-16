@@ -82,6 +82,32 @@ een lege of afgekapte waarde hebt geplakt.
 | Contactpersonen ophalen bij Lusha | alleen lokaal, met `LUSHA_API_KEY` |
 | Concernstructuur en signalen live uit Company.info | **nog niet** — zie hieronder |
 
+## Elk bedrijf opzoeken
+
+Typ een naam in de zoekbalk. Staat het bedrijf niet in je geladen bestanden, dan
+verschijnt bovenaan **Zoek "…" bij Lusha**. Je krijgt de bedrijven die Lusha kent,
+kiest de juiste, en ziet de contactpersonen met hun rol.
+
+## E-mail en telefoon onthullen
+
+Per contact staat een knop **Onthul**, of onthul ze in één keer voor het hele
+bedrijf. De prijs staat er altijd bij en je krijgt een bevestiging voordat er
+credits worden uitgegeven:
+
+| Wat | Kosten |
+|---|---|
+| Bedrijven zoeken | 1 credit per 25 resultaten |
+| Contactpersonen zoeken | 1 credit per 25 resultaten |
+| E-mailadres | 1 credit per contact |
+| Telefoonnummer | 5 credits per contact |
+
+Onthulde gegevens blijven in het venster staan en worden nergens opgeslagen. Sluit
+je de pagina, dan zijn ze weg.
+
+> Krijg je een **404** bij het onthullen, dan klopt het pad van het
+> verrijkingseindpunt niet. Zet het juiste pad in `.env` onder
+> `LUSHA_ENRICH_PATH`; de foutmelding toont wat Lusha terugstuurde.
+
 ## Contactpersonen ophalen
 
 Open een concern uit je Company.info-export en klik **Haal contactpersonen op**.

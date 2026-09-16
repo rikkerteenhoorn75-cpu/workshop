@@ -176,7 +176,7 @@ async function dmuOphalen(req, res){
   const payload = {
     pages: {page: 0, size: Math.min(Number(vraag.aantal) || 25, 50)},
     filters: {
-      companies: {include: {names: [bedrijf]}},
+      companies: {include: vraag.bedrijfId ? {companyIds: [vraag.bedrijfId]} : {names: [bedrijf]}},
       contacts: {include: {
         countries: [String(vraag.land || "NL")],
         senioritiesLabels: Array.isArray(vraag.niveaus) && vraag.niveaus.length ? vraag.niveaus : SENIORITY
@@ -234,6 +234,103 @@ async function dmuOphalen(req, res){
   }
 }
 
+
+/* ---------- bedrijven zoeken bij Lusha ----------
+ * Zodat je elke naam kunt intikken, ook als hij niet in je export staat. */
+async function bedrijvenZoeken(req, res){
+  const bron = BRONNEN.lusha;
+  if(!bron.sleutel) return json(res, 503, {fout:"Lusha-sleutel ontbreekt",
+    oplossing:"Zet LUSHA_API_KEY in lokaal/.env en herstart de server."});
+  let vraag;
+  try{ vraag = JSON.parse(await leesBody(req) || "{}"); }
+  catch(e){ return json(res, 400, {fout:"Ongeldige JSON"}); }
+  const naam = String(vraag.naam || "").trim();
+  if(!naam) return json(res, 400, {fout:"Geef een bedrijfsnaam mee"});
+
+  const payload = {
+    pages: {page:0, size:10},
+    filters: {companies: {include: {names: [naam], locations: [{country: vraag.land || "Netherlands"}]}}}
+  };
+  const uit = await lushaPost("/v3/companies/prospecting", payload, res, "bedrijven zoeken \"" + naam + "\"");
+  if(!uit) return;
+  const lijst = Array.isArray(uit.data) ? uit.data : Array.isArray(uit.results) ? uit.results : [];
+  json(res, 200, {
+    gevonden: (uit.pagination || {}).total ?? lijst.length,
+    credits: (uit.billing || {}).creditsCharged ?? null,
+    bedrijven: lijst.map(c => ({
+      id: c.id, naam: c.name || c.companyName || "",
+      domein: c.domain || "", plaats: (c.location || {}).city || "",
+      land: (c.location || {}).country || "", branche: c.industry || c.mainIndustry || "",
+      omvang: c.employees || c.numberOfEmployees || (c.size || {}).name || ""
+    }))
+  });
+}
+
+/* ---------- e-mail en telefoon onthullen ----------
+ * Kost credits, dus alleen op expliciet verzoek en per opgegeven contact. */
+async function onthullen(req, res){
+  const bron = BRONNEN.lusha;
+  if(!bron.sleutel) return json(res, 503, {fout:"Lusha-sleutel ontbreekt"});
+  let vraag;
+  try{ vraag = JSON.parse(await leesBody(req) || "{}"); }
+  catch(e){ return json(res, 400, {fout:"Ongeldige JSON"}); }
+  const ids = Array.isArray(vraag.ids) ? vraag.ids.slice(0, 50) : [];
+  if(!ids.length) return json(res, 400, {fout:"Geef contact-ids mee"});
+  const velden = Array.isArray(vraag.velden) && vraag.velden.length ? vraag.velden : ["emails"];
+
+  const pad = env.LUSHA_ENRICH_PATH || "/v3/contacts/enrich";
+  const uit = await lushaPost(pad, {contactIds: ids, ids, reveal: velden}, res,
+    "onthullen van " + ids.length + " contact(en)");
+  if(!uit) return;
+  const lijst = Array.isArray(uit.results) ? uit.results : Array.isArray(uit.data) ? uit.data : [];
+  json(res, 200, {
+    credits: (uit.billing || {}).creditsCharged ?? null,
+    contacten: lijst.map(c => ({
+      id: c.id,
+      mails: (c.emails || []).map(e => ({adres: e.email || e.address || "", soort: e.type || "",
+                                         zekerheid: e.confidence || ""})),
+      telefoons: (c.phones || []).map(p => ({nummer: p.number || p.phone || p.internationalNumber || "",
+                                             soort: p.type || ""})),
+      sinds: ((c.jobTitle || {}).startDate || "").slice(0, 10),
+      ontbreekt: c.missingDataPoints || []
+    }))
+  });
+}
+
+/* Eén plek voor alle Lusha-aanroepen: zelfde koppen, zelfde foutafhandeling. */
+async function lushaPost(pad, payload, res, wat){
+  const bron = BRONNEN.lusha;
+  const url = bron.basis.replace(/\/+$/, "") + pad;
+  try{
+    const antwoord = await fetch(url, {
+      method:"POST",
+      headers:{[bron.header]: bron.sleutel, "content-type":"application/json", accept:"application/json"},
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(Number(env.TIMEOUT_MS || 20000))
+    });
+    const tekst = await antwoord.text();
+    console.log("  POST Lusha " + pad + " (" + wat + ") -> " + antwoord.status);
+    let data = null;
+    try{ data = JSON.parse(tekst); }catch(e){ /* geen JSON */ }
+    if(!antwoord.ok || !data){
+      json(res, antwoord.status || 502, {
+        fout: "Lusha gaf een fout terug", status: antwoord.status,
+        pad, ruw: (tekst || "").slice(0, 2000),
+        hint: antwoord.status === 401 ? "Klopt de headernaam? Pas LUSHA_HEADER aan in .env."
+            : antwoord.status === 404 ? "Dit eindpunt bestaat niet onder dit pad. Pas LUSHA_ENRICH_PATH aan in .env."
+            : antwoord.status === 403 ? "De sleutel mag dit eindpunt niet."
+            : "Zie 'ruw' voor wat Lusha precies antwoordde."
+      });
+      return null;
+    }
+    return data;
+  }catch(e){
+    console.log("  POST Lusha " + pad + " -> MISLUKT: " + e.message);
+    json(res, 502, {fout:"Kon Lusha niet bereiken", detail:e.message});
+    return null;
+  }
+}
+
 /* ---------- statische bestanden ---------- */
 function statisch(req, res, pad){
   const doel = path.join(PUBLIEK, pad === "/" ? "index.html" : pad);
@@ -263,6 +360,8 @@ const server = http.createServer(async (req, res) => {
     });
   }
   if(pad === "/api/dmu" && req.method === "POST") return dmuOphalen(req, res);
+  if(pad === "/api/bedrijven" && req.method === "POST") return bedrijvenZoeken(req, res);
+  if(pad === "/api/onthul" && req.method === "POST") return onthullen(req, res);
   const m = pad.match(/^\/api\/(companyinfo|lusha)\/(.*)$/);
   if(m) return doorgeven(m[1], m[2], req, res);
   if(pad.startsWith("/api/")) return json(res, 404, {fout:"Onbekend eindpunt"});
