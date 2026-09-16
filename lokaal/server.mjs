@@ -11,6 +11,7 @@
 
 import http from "node:http";
 import fs from "node:fs";
+import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -54,7 +55,8 @@ const BRONNEN = {
 /* ---------- hulpjes ---------- */
 const TYPES = {".html":"text/html; charset=utf-8", ".js":"text/javascript; charset=utf-8",
   ".css":"text/css; charset=utf-8", ".json":"application/json; charset=utf-8",
-  ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon"};
+  ".svg":"image/svg+xml", ".png":"image/png", ".ico":"image/x-icon",
+  ".webmanifest":"application/manifest+json"};
 
 function json(res, code, data){
   const body = JSON.stringify(data, null, 2);
@@ -267,12 +269,39 @@ const server = http.createServer(async (req, res) => {
   return statisch(req, res, pad);
 });
 
+/* De browser openen zodat je niets hoeft te typen. NO_OPEN=1 slaat dit over. */
+function openBrowser(url){
+  if(env.NO_OPEN === "1") return;
+  const cmd = process.platform === "darwin" ? ["open", [url]]
+            : process.platform === "win32"  ? ["cmd", ["/c", "start", "", url]]
+            : ["xdg-open", [url]];
+  try{
+    const kind = spawn(cmd[0], cmd[1], {stdio:"ignore", detached:true});
+    /* spawn meldt een ontbrekend commando via een error-event, niet met een
+       exception; zonder deze handler valt Node om op een kale machine */
+    kind.on("error", () => {});
+    kind.unref();
+  }catch(e){ /* lukt het niet, dan opent de gebruiker hem zelf */ }
+}
+
 /* Bewust alleen 127.0.0.1: niet bereikbaar vanaf het netwerk. */
 server.listen(POORT, "127.0.0.1", () => {
-  console.log("\n  Prospect Kompas draait op http://127.0.0.1:" + POORT);
+  const url = "http://127.0.0.1:" + POORT;
+  console.log("\n  Prospect Kompas draait op " + url);
   for(const [k, b] of Object.entries(BRONNEN)){
     console.log("  " + (b.sleutel ? "✓" : "✗") + " " + b.naam.padEnd(13) +
       (b.sleutel ? "sleutel ingesteld (" + b.sleutel.length + " tekens)" : "geen sleutel - zet " + k.toUpperCase() + "_API_KEY in .env"));
   }
-  console.log("  Stoppen: Ctrl+C\n");
+  console.log("  Stoppen: sluit dit venster of druk Ctrl+C\n");
+  openBrowser(url);
+});
+
+server.on("error", e => {
+  if(e.code === "EADDRINUSE"){
+    console.error("\n  Poort " + POORT + " is al bezet - draait Prospect Kompas al?");
+    console.error("  Sluit dat venster, of start met een andere poort: PORT=4322 node server.mjs\n");
+  } else {
+    console.error("\n  Starten mislukt: " + e.message + "\n");
+  }
+  process.exit(1);
 });

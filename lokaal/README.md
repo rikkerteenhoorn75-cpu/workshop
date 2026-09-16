@@ -13,16 +13,41 @@ Node 18 of nieuwer. Verder niets: geen `npm install`, geen afhankelijkheden.
 
 ## Starten
 
+**Dubbelklik de starter in deze map:**
+
+| Jouw computer | Bestand |
+|---|---|
+| Mac of Linux | `Start Prospect Kompas.command` |
+| Windows | `Start Prospect Kompas.bat` |
+
+De starter controleert of Node aanwezig is, maakt bij de eerste keer je `.env`
+aan, start de server en opent je browser. Meer hoef je niet te doen.
+
+> Op een Mac kan de eerste keer een waarschuwing verschijnen omdat het bestand
+> van internet komt. Rechtsklik → Openen → Openen, dan onthoudt hij het.
+
+Liever vanaf de opdrachtregel:
+
 ```bash
 cd lokaal
-cp .env.example .env      # vul je sleutels in
+cp .env.example .env
 node server.mjs
 ```
 
-Open daarna **http://127.0.0.1:4321**.
+Open dan **http://127.0.0.1:4321**.
 
 De server luistert bewust alleen op `127.0.0.1`. Hij is dus niet bereikbaar vanaf
 je netwerk, ook niet voor collega's op hetzelfde wifi.
+
+## Als app installeren
+
+Open http://127.0.0.1:4321 in Chrome of Edge en klik op het installatie-icoon in
+de adresbalk (of menu → Installeren). Prospect Kompas komt dan in je dock of
+taakbalk te staan en opent in een eigen venster, zonder adresbalk en tabbladen.
+
+De starter moet wel draaien: het blijft een lokale app, geen website.
+
+Afsluiten doe je door het startervenster te sluiten.
 
 ## Sleutels
 
