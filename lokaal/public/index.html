@@ -15,6 +15,8 @@ img{max-width:100%} [hidden]{display:none!important}
 </head>
 <body>
 <title>Prospect Kompas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0B5A67">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600&display=swap">
@@ -1188,18 +1190,28 @@ function amChip(am){
   return `<span class="am-chip ${mij ? "mij" : ""}">${mij ? "van jou" : esc(am)}</span>`;
 }
 
+function uploadHtml(){
+  /* Dit blok staat er altijd. Eerder zat het invoerveld alleen in de lege staat,
+     waardoor je na het eerste bestand geen tweede meer kon toevoegen. */
+  const geladen = [];
+  if(state.klanten.length) geladen.push(nl(state.klanten.length) + " accounts");
+  if(state.ci) geladen.push(nl(state.ci.ent.length) + " entiteiten");
+  return `<div class="kl">
+    <div class="kl-top">
+      <h3>Bestanden</h3>
+      <p>${geladen.length
+        ? "Geladen: " + geladen.join(" en ") + ". Je kunt er nog een toevoegen."
+        : "Laad een AM-lijst (kolom A accountmanager, kolom B accountnaam) of een Company.info-export."}
+        Alles wordt in je browser gelezen, gaat nergens heen en wordt niet opgeslagen.</p>
+      <span class="kl-file"><button class="btn btn-sm ${geladen.length ? "" : "btn-primary"}">
+        ${geladen.length ? "Nog een bestand" : "Bestand kiezen"}</button>
+        <input type="file" id="kl-in" accept=".xlsx,.csv,.txt" aria-label="Bestand kiezen"></span>
+    </div>
+  </div>`;
+}
+
 function klantenlijstHtml(){
-  if(!state.klanten.length){
-    return `<div class="kl">
-      <div class="kl-top">
-        <h3>Klantenlijst</h3>
-        <p>Laad een AM-lijst (kolom A accountmanager, kolom B accountnaam) of een Company.info-export.
-           Het bestand wordt in je browser uitgelezen, gaat nergens heen en wordt niet opgeslagen.</p>
-        <span class="kl-file"><button class="btn btn-sm btn-primary">Bestand kiezen</button>
-          <input type="file" id="kl-in" accept=".xlsx,.csv,.txt" aria-label="Klantenlijst kiezen"></span>
-      </div>
-    </div>`;
-  }
+  if(!state.klanten.length) return "";
   const stats = amStats();
   const personen = stats.filter(x => isPersoon(x[0]));
   const zonder = stats.filter(x => !isPersoon(x[0])).reduce((a, b) => a + b[1], 0);
@@ -1207,8 +1219,8 @@ function klantenlijstHtml(){
   const mijn = state.ikBen ? state.klanten.filter(k => k.am === state.ikBen).length : 0;
   return `<div class="kl">
     <div class="kl-top">
-      <h3>Klantenlijst geladen</h3>
-      <p>${esc(state.klantBestand)} &middot; alleen in het geheugen, weg na een verversing</p>
+      <h3>AM-lijst</h3>
+      <p>${esc(state.klantBestand)}</p>
       <button class="btn btn-sm" id="kl-clear">Wissen</button>
     </div>
     <div class="kl-stat">
@@ -1225,9 +1237,24 @@ function klantenlijstHtml(){
       </select>
     </div>
     ${raar ? `<div class="kl-warn"><b>Let op:</b> ${nl(raar)} accountnamen bevatten een vraagteken op de plek van een
-      letter met accent (bijvoorbeeld &ldquo;Co?peratie&rdquo;). Dat is een tekensetfout in de export zelf, niet in deze
-      weergave &mdash; exporteer als UTF-8 om het bij de bron op te lossen.</div>` : ""}
+      letter met accent (bijvoorbeeld &ldquo;Co?peratie&rdquo;). Dat is een tekensetfout in de export zelf &mdash;
+      exporteer als UTF-8 om het bij de bron op te lossen.</div>` : ""}
+    ${state.ci ? dekkingHtml() : ""}
   </div>`;
+}
+
+/* Hoeveel van je accounts staan er eigenlijk in het bedrijvenbestand? Zonder dit
+   getal lijkt het alsof de app het laat afweten, terwijl de gegevens ontbreken. */
+function dekkingHtml(){
+  const namen = new Set();
+  state.ci.ent.forEach(e => { namen.add(norm(e.naam)); if(e.parent) namen.add(norm(e.parent)); });
+  const raak = state.klanten.filter(k => namen.has(norm(k.naam))).length;
+  const pct = Math.round(100 * raak / state.klanten.length);
+  return `<div class="kl-warn" style="background:${pct < 40 ? "var(--amber-soft)" : "var(--green-soft)"};
+      color:${pct < 40 ? "var(--amber)" : "var(--green)"}">
+    <b>${nl(raak)} van je ${nl(state.klanten.length)} accounts (${pct}%)</b> staan in het bedrijvenbestand.
+    Voor de overige ${nl(state.klanten.length - raak)} is er geen concernstructuur, omdat die bedrijven niet in
+    de export zitten &mdash; niet omdat de app ze niet vindt. Vraag een bredere export op om dat te verhelpen.</div>`;
 }
 
 function ciPaneelHtml(){
@@ -1240,7 +1267,7 @@ function ciPaneelHtml(){
   return `<div class="kl">
     <div class="kl-top">
       <h3>Bedrijvenbestand</h3>
-      <p>${esc(c.bestand)} &middot; alleen in het geheugen, weg na een verversing</p>
+      <p>${esc(c.bestand)}</p>
       <button class="btn btn-sm" id="ci-clear">Wissen</button>
     </div>
     <div class="kl-stat">
@@ -1683,6 +1710,7 @@ function renderStart(){
         </div>
         <div id="res" hidden></div>
       </div>
+      ${uploadHtml()}
       ${klantenlijstHtml()}
       ${ciPaneelHtml()}
       <div id="api-blok">${apiHtml()}</div>
