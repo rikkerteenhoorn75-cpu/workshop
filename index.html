@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pulse — Ontdek evenementen</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --bg-elevated: #171a21;
+    --card: #1c2029;
+    --card-border: #2a2f3a;
+    --accent: #6c5ce7;
+    --accent-2: #ff6b6b;
+    --accent-3: #22d3a5;
+    --text: #f4f5f7;
+    --text-muted: #9aa0ac;
+    --shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.6);
+    --radius: 18px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(108, 92, 231, 0.25), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(34, 211, 165, 0.18), transparent 40%),
+      var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ---------- Header / Navigatie ---------- */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 22px 6vw;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .logo-mark {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--accent), var(--accent-3));
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+  }
+
+  nav {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 26px;
+    margin: 0;
+    padding: 0;
+  }
+
+  nav a {
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+  }
+
+  nav a:hover,
+  nav a.active {
+    color: var(--text);
+  }
+
+  .nav-cta {
+    background: var(--accent);
+    color: #fff !important;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    box-shadow: 0 8px 20px -8px rgba(108, 92, 231, 0.7);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .nav-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px -8px rgba(108, 92, 231, 0.85);
+  }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    padding: 40px 6vw 10px;
+    max-width: 900px;
+  }
+
+  .eyebrow {
+    display: inline-block;
+    color: var(--accent-3);
+    background: rgba(34, 211, 165, 0.12);
+    border: 1px solid rgba(34, 211, 165, 0.3);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+  }
+
+  h1 {
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    font-weight: 800;
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    margin: 0 0 16px;
+  }
+
+  h1 span {
+    background: linear-gradient(90deg, var(--accent), var(--accent-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .hero p {
+    color: var(--text-muted);
+    font-size: 1.08rem;
+    max-width: 560px;
+    margin: 0 0 28px;
+  }
+
+  .hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+  }
+
+  .btn-primary {
+    background: linear-gradient(90deg, var(--accent), #8b7cf7);
+    color: #fff;
+    border: none;
+    padding: 14px 26px;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 12px 26px -10px rgba(108, 92, 231, 0.8);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 30px -10px rgba(108, 92, 231, 0.95);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  #greeting {
+    font-size: 0.98rem;
+    font-weight: 600;
+    color: var(--accent-3);
+    min-height: 1.4em;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  #greeting.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ---------- Events sectie ---------- */
+  .events-section {
+    padding: 40px 6vw 80px;
+  }
+
+  .section-heading {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .section-heading h2 {
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .section-heading p {
+    color: var(--text-muted);
+    margin: 0;
+    font-size: 0.95rem;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s ease, border-color 0.25s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(108, 92, 231, 0.5);
+  }
+
+  .card-banner {
+    height: 140px;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    padding: 14px;
+  }
+
+  .card-banner.one { background: linear-gradient(135deg, #6c5ce7, #341f97); }
+  .card-banner.two { background: linear-gradient(135deg, #ff6b6b, #b33939); }
+  .card-banner.three { background: linear-gradient(135deg, #22d3a5, #0a6e5f); }
+
+  .card-tag {
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    border-radius: 999px;
+    letter-spacing: 0.02em;
+  }
+
+  .card-body {
+    padding: 20px 20px 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+  }
+
+  .card-body h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+  }
+
+  .meta-row svg {
+    flex-shrink: 0;
+    opacity: 0.8;
+  }
+
+  .card-desc {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    margin: 4px 0 8px;
+  }
+
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid var(--card-border);
+  }
+
+  .price {
+    font-weight: 800;
+    font-size: 0.95rem;
+  }
+
+  .card-link {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  footer {
+    text-align: center;
+    padding: 24px 6vw 40px;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    border-top: 1px solid var(--card-border);
+  }
+
+  /* ---------- Responsief ---------- */
+  @media (max-width: 980px) {
+    .card-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 720px) {
+    header {
+      padding: 18px 5vw;
+    }
+    nav ul {
+      display: none;
+    }
+    .hero {
+      padding: 28px 5vw 6px;
+    }
+    .events-section {
+      padding: 30px 5vw 60px;
+    }
+    .card-grid {
+      grid-template-columns: 1fr;
+    }
+    .hero-actions {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <header>
+    <div class="logo">
+      <span class="logo-mark">✦</span>
+      Pulse
+    </div>
+    <nav>
+      <ul>
+        <li><a href="#" class="active">Ontdekken</a></li>
+        <li><a href="#">Categorieën</a></li>
+        <li><a href="#">Mijn tickets</a></li>
+        <li><a href="#">Over ons</a></li>
+      </ul>
+      <a href="#" class="nav-cta">Organiseer een event</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <span class="eyebrow">Nieuw dit seizoen</span>
+    <h1>Vind je volgende <span>onvergetelijke</span> evenement</h1>
+    <p>
+      Van intieme concerten tot bruisende festivals — Pulse brengt de leukste
+      evenementen bij jou in de buurt samen op één plek.
+    </p>
+    <div class="hero-actions">
+      <button class="btn-primary" id="greetBtn" type="button">Zeg hallo 👋</button>
+      <span id="greeting"></span>
+    </div>
+  </section>
+
+  <section class="events-section">
+    <div class="section-heading">
+      <h2>Uitgelichte evenementen</h2>
+      <p>3 evenementen · deze maand</p>
+    </div>
+
+    <div class="card-grid">
+
+      <article class="card">
+        <div class="card-banner one">
+          <span class="card-tag">Muziek</span>
+        </div>
+        <div class="card-body">
+          <h3>Neon Nachten Festival</h3>
+          <div class="meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Zaterdag 17 oktober 2026
+          </div>
+          <div class="meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Westerpark, Amsterdam
+          </div>
+          <p class="card-desc">Een avond vol elektronische muziek, lichtshows en food trucks.</p>
+          <div class="card-footer">
+            <span class="price">€ 39,00</span>
+            <a href="#" class="card-link">Bekijk details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-banner two">
+          <span class="card-tag">Foodtruck</span>
+        </div>
+        <div class="card-body">
+          <h3>Smaakplein Rotterdam</h3>
+          <div class="meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Zondag 8 november 2026
+          </div>
+          <div class="meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Museumpark, Rotterdam
+          </div>
+          <p class="card-desc">Proef gerechten van meer dan 30 lokale foodtrucks en chefs.</p>
+          <div class="card-footer">
+            <span class="price">Gratis toegang</span>
+            <a href="#" class="card-link">Bekijk details →</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-banner three">
+          <span class="card-tag">Tech</span>
+        </div>
+        <div class="card-body">
+          <h3>Innovatiedag Utrecht</h3>
+          <div class="meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            Donderdag 3 december 2026
+          </div>
+          <div class="meta-row">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            Jaarbeurs, Utrecht
+          </div>
+          <p class="card-desc">Een dag vol talks, workshops en netwerken met tech-pioniers.</p>
+          <div class="card-footer">
+            <span class="price">€ 15,00</span>
+            <a href="#" class="card-link">Bekijk details →</a>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer>
+    © 2026 Pulse — fictieve evenementen-app, alleen voor demonstratiedoeleinden.
+  </footer>
+
+  <script>
+    (function () {
+      var greetings = [
+        "Hallo daar! Leuk dat je Pulse bekijkt. 🎉",
+        "Hoi! Klaar om een evenement te ontdekken? ✨",
+        "Hey! Fijn dat je er bent. 🙌",
+        "Welkom terug! Er staan mooie events op je te wachten. 🎈"
+      ];
+
+      var btn = document.getElementById("greetBtn");
+      var greetingEl = document.getElementById("greeting");
+      var hideTimeout;
+
+      btn.addEventListener("click", function () {
+        var message = greetings[Math.floor(Math.random() * greetings.length)];
+        greetingEl.textContent = message;
+        greetingEl.classList.add("show");
+
+        clearTimeout(hideTimeout);
+        hideTimeout = setTimeout(function () {
+          greetingEl.classList.remove("show");
+        }, 4000);
+      });
+    })();
+  </script>
+
+</body>
+</html>
