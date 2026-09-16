@@ -1,0 +1,14 @@
+{
+  "name": "Prospect Kompas",
+  "short_name": "Kompas",
+  "description": "Gespreksvoorbereiding voor new business",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#EDF0EF",
+  "theme_color": "#0B5A67",
+  "icons": [
+    {"src": "/icoon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "/icoon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}
