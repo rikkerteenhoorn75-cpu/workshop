@@ -217,8 +217,8 @@ input,textarea,select{font:inherit; color:inherit}
 }
 .node:hover{background:var(--surface-2); border-color:var(--line)}
 .node.here{background:var(--accent-soft); border-color:color-mix(in srgb, var(--accent) 35%, transparent)}
-.node-name{font-weight:500; font-size:14px}
-.node-meta{font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace}
+.node-name{font-weight:500; font-size:14px; overflow-wrap:anywhere}
+.node-meta{font-size:12px; color:var(--ink-3); font-family:"IBM Plex Mono",monospace; overflow-wrap:anywhere}
 .node-mid{flex:1; min-width:0}
 .node-arr{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--green); font-weight:500; flex:none}
 .twist{
@@ -1880,8 +1880,8 @@ function treeHtml(node, path){
       <span class="node-mid">
         <span class="node-name">${node.naam}</span><br>
         <span class="node-meta">${node.plaats} &middot; ${nl(node.mdw)} mdw${node.note ? " &middot; " + node.note : ""}</span>
+        ${node.eigenaar ? `<span class="am-chip ${node.eigenaar === "jij" ? "mij" : ""}" style="margin-left:6px">${node.eigenaar === "jij" ? "van jou" : esc(node.eigenaar)}</span>` : ""}
       </span>
-      ${node.eigenaar ? `<span class="am-chip ${node.eigenaar === "jij" ? "mij" : ""}">${node.eigenaar === "jij" ? "van jou" : esc(node.eigenaar)}</span>` : ""}
       ${node.arr ? `<span class="node-arr">${eur(node.arr)}</span>` : ""}
     </button>
     ${kids.length ? kids.map((k, i) => treeHtml(k, path.concat(i))).join("") : ""}
