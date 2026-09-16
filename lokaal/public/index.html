@@ -864,6 +864,7 @@ const state = {
   tab:0,
   rolFilter:"alle",
   klanten:[],
+  ci:null,
   api:null,
   klantBestand:"",
   ikBen:"",
@@ -929,121 +930,18 @@ async function copy(text, msg){
    Niets wordt opgeslagen: na een verversing is de lijst weg.
    Geen externe library - .xlsx wordt met DecompressionStream uitgepakt. */
 
-const NIET_PERSOON = ["vacature","sme","onbekend","n.v.t.","nvt",""];
-
-async function leesBestand(file){
-  const naam = file.name.toLowerCase();
-  if(naam.endsWith(".csv") || naam.endsWith(".txt")) return parseCsv(await file.text());
-  if(naam.endsWith(".xlsx")) return parseXlsx(await file.arrayBuffer());
-  throw new Error("Alleen .xlsx of .csv");
-}
-
-function parseCsv(tekst){
-  const scheiding = (tekst.split("\n")[0].match(/;/g) || []).length >= (tekst.split("\n")[0].match(/,/g) || []).length ? ";" : ",";
-  return tekst.split(/\r?\n/).filter(r => r.trim()).map(r => {
-    const c = r.split(scheiding).map(x => x.replace(/^"|"$/g, "").trim());
-    return [c[0] || "", c[1] || ""];
-  });
-}
-
-/* --- minimale ZIP-lezer: xlsx is een zip met XML erin --- */
-async function unzip(buf, wanted){
-  const dv = new DataView(buf), u8 = new Uint8Array(buf);
-  let eocd = -1;
-  for(let i = u8.length - 22; i >= 0 && i > u8.length - 66000; i--){
-    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
-  }
-  if(eocd < 0) throw new Error("Geen geldig xlsx-bestand");
-  const aantal = dv.getUint16(eocd + 10, true);
-  let p = dv.getUint32(eocd + 16, true);
-  const uit = {};
-  for(let n = 0; n < aantal; n++){
-    if(dv.getUint32(p, true) !== 0x02014b50) break;
-    const methode = dv.getUint16(p + 10, true);
-    const compLen = dv.getUint32(p + 20, true);
-    const fnLen = dv.getUint16(p + 28, true);
-    const exLen = dv.getUint16(p + 30, true);
-    const cmLen = dv.getUint16(p + 32, true);
-    const lokaal = dv.getUint32(p + 42, true);
-    const naam = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + fnLen));
-    p += 46 + fnLen + exLen + cmLen;
-    if(!wanted.some(w => naam === w || naam.startsWith(w))) continue;
-    const lfn = dv.getUint16(lokaal + 26, true), lex = dv.getUint16(lokaal + 28, true);
-    const start = lokaal + 30 + lfn + lex;
-    const rauw = u8.subarray(start, start + compLen);
-    uit[naam] = methode === 0 ? rauw : await inflate(rauw);
-  }
-  return uit;
-}
-
-async function inflate(bytes){
-  if(typeof DecompressionStream !== "function") throw new Error("Deze browser kan .xlsx niet uitpakken - sla op als .csv");
-  const ds = new DecompressionStream("deflate-raw");
-  const stream = new Blob([bytes]).stream().pipeThrough(ds);
-  return new Uint8Array(await new Response(stream).arrayBuffer());
-}
-
-async function parseXlsx(buf){
-  const files = await unzip(buf, ["xl/sharedStrings.xml", "xl/worksheets/sheet1.xml"]);
-  const dec = new TextDecoder();
-  const dp = new DOMParser();
-  let gedeeld = [];
-  if(files["xl/sharedStrings.xml"]){
-    const doc = dp.parseFromString(dec.decode(files["xl/sharedStrings.xml"]), "application/xml");
-    gedeeld = [...doc.getElementsByTagName("si")].map(si =>
-      [...si.getElementsByTagName("t")].map(t => t.textContent).join(""));
-  }
-  const blad = files["xl/worksheets/sheet1.xml"];
-  if(!blad) throw new Error("Geen werkblad gevonden in het bestand");
-  const doc = dp.parseFromString(dec.decode(blad), "application/xml");
-  return [...doc.getElementsByTagName("row")].map(row => {
-    const cellen = {};
-    [...row.getElementsByTagName("c")].forEach(c => {
-      const kolom = (c.getAttribute("r") || "").replace(/\d/g, "");
-      const v = c.getElementsByTagName("v")[0];
-      const isTekst = c.getAttribute("t") === "s";
-      let waarde = "";
-      if(c.getAttribute("t") === "inlineStr"){
-        waarde = [...c.getElementsByTagName("t")].map(t => t.textContent).join("");
-      } else if(v){
-        waarde = isTekst ? (gedeeld[+v.textContent] || "") : v.textContent;
-      }
-      cellen[kolom] = waarde.trim();
-    });
-    return [cellen.A || "", cellen.B || ""];
-  }).filter(r => r[0] || r[1]);
-}
-
-async function laadKlantenlijst(file){
-  try{
-    const rijen = await leesBestand(file);
-    const schoon = rijen
-      .filter(r => r[1])
-      .filter(r => !/^(am|account\s*manager|accountmanager)$/i.test(r[0]))
-      .map(r => ({am: r[0] || "", naam: r[1]}));
-    if(!schoon.length) throw new Error("Geen bruikbare rijen gevonden - verwacht kolom A met de accountmanager en kolom B met de accountnaam");
-    state.klanten = schoon;
-    state.klantBestand = file.name;
-    state.ikBen = "";
-    renderStart();
-    toast("<b>" + nl(schoon.length) + "</b> accounts geladen uit " + esc(file.name));
-  }catch(e){
-    toast("Inlezen mislukt: " + esc(e.message));
-  }
-}
-
-
-/* --- naam-matching tegen de klantenlijst ---------------------------------
-   Bedrijfsnamen in exports zijn rommelig: rechtsvormen, accenten, leestekens
-   en in dit bestand ook vraagtekens waar een accent hoorde. We vergelijken
-   daarom op een genormaliseerde vorm, niet op de letterlijke tekst. */
+/* --- naam-matching -------------------------------------------------------
+   Bedrijfsnamen in exports zijn rommelig: rechtsvormen, accenten, leestekens,
+   en in de AM-export ook vraagtekens waar een accent hoorde. We vergelijken op
+   een genormaliseerde vorm. Punten gaan er eerst uit, anders wordt "N.V." twee
+   losse letters en herkent de rechtsvormfilter hem nooit. */
 
 const RECHTSVORM = /\b(bv|nv|ua|cv|vof|gmbh|ag|ltd|limited|inc|plc|sa|sarl|sas|kg|oy|ab|as)\b/g;
 
 function norm(x){
   return String(x).toLowerCase()
     .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/\?/g, "")
+    .replace(/[.'’?]/g, "")
     .replace(/[^a-z0-9]+/g, " ")
     .replace(RECHTSVORM, " ")
     .replace(/\s+/g, " ").trim();
@@ -1081,6 +979,180 @@ function zoekKlanten(term, limiet){
     .slice(0, limiet || 6);
 }
 
+const NIET_PERSOON = ["vacature","sme","onbekend","n.v.t.","nvt",""];
+
+async function leesBestand(file){
+  const naam = file.name.toLowerCase();
+  if(naam.endsWith(".csv") || naam.endsWith(".txt")) return parseCsv(await file.text());
+  if(naam.endsWith(".xlsx")) return parseXlsx(await file.arrayBuffer());
+  throw new Error("Alleen .xlsx of .csv");
+}
+
+function kolomIndex(ref){          /* "A"->0, "Z"->25, "AA"->26, "BD"->55 */
+  let n = 0;
+  for(const c of ref) n = n * 26 + (c.charCodeAt(0) - 64);
+  return n - 1;
+}
+
+function parseCsv(tekst){
+  const eerste = tekst.split("\n")[0];
+  const scheiding = (eerste.match(/;/g) || []).length >= (eerste.match(/,/g) || []).length ? ";" : ",";
+  return tekst.split(/\r?\n/).filter(r => r.trim())
+    .map(r => r.split(scheiding).map(x => x.replace(/^"|"$/g, "").trim()));
+}
+
+/* --- minimale ZIP-lezer: xlsx is een zip met XML erin --- */
+async function unzip(buf, wanted){
+  const dv = new DataView(buf), u8 = new Uint8Array(buf);
+  let eocd = -1;
+  for(let i = u8.length - 22; i >= 0 && i > u8.length - 66000; i--){
+    if(dv.getUint32(i, true) === 0x06054b50){ eocd = i; break; }
+  }
+  if(eocd < 0) throw new Error("Geen geldig xlsx-bestand");
+  const aantal = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+  const uit = {};
+  for(let n = 0; n < aantal; n++){
+    if(dv.getUint32(p, true) !== 0x02014b50) break;
+    const methode = dv.getUint16(p + 10, true);
+    const compLen = dv.getUint32(p + 20, true);
+    const fnLen = dv.getUint16(p + 28, true);
+    const exLen = dv.getUint16(p + 30, true);
+    const cmLen = dv.getUint16(p + 32, true);
+    const lokaal = dv.getUint32(p + 42, true);
+    const naam = new TextDecoder().decode(u8.subarray(p + 46, p + 46 + fnLen));
+    p += 46 + fnLen + exLen + cmLen;
+    if(!wanted.some(w => naam === w || naam.startsWith(w))) continue;
+    const lfn = dv.getUint16(lokaal + 26, true), lex = dv.getUint16(lokaal + 28, true);
+    const begin = lokaal + 30 + lfn + lex;
+    const rauw = u8.subarray(begin, begin + compLen);
+    uit[naam] = methode === 0 ? rauw : await inflate(rauw);
+  }
+  return uit;
+}
+
+async function inflate(bytes){
+  if(typeof DecompressionStream !== "function")
+    throw new Error("Deze browser kan .xlsx niet uitpakken - sla het op als .csv");
+  const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function parseXlsx(buf){
+  const files = await unzip(buf, ["xl/sharedStrings.xml", "xl/worksheets/sheet"]);
+  const dec = new TextDecoder(), dp = new DOMParser();
+  let gedeeld = [];
+  if(files["xl/sharedStrings.xml"]){
+    const doc = dp.parseFromString(dec.decode(files["xl/sharedStrings.xml"]), "application/xml");
+    gedeeld = [...doc.getElementsByTagName("si")].map(si =>
+      [...si.getElementsByTagName("t")].map(t => t.textContent).join(""));
+  }
+  const bladNaam = Object.keys(files).find(k => k.startsWith("xl/worksheets/sheet"));
+  if(!bladNaam) throw new Error("Geen werkblad gevonden in het bestand");
+  const doc = dp.parseFromString(dec.decode(files[bladNaam]), "application/xml");
+  return [...doc.getElementsByTagName("row")].map(row => {
+    const cellen = [];
+    [...row.getElementsByTagName("c")].forEach(c => {
+      const i = kolomIndex((c.getAttribute("r") || "A").replace(/\d/g, "") || "A");
+      const v = c.getElementsByTagName("v")[0];
+      let waarde = "";
+      if(c.getAttribute("t") === "inlineStr"){
+        waarde = [...c.getElementsByTagName("t")].map(t => t.textContent).join("");
+      } else if(v){
+        waarde = c.getAttribute("t") === "s" ? (gedeeld[+v.textContent] || "") : v.textContent;
+      }
+      cellen[i] = String(waarde).trim();
+    });
+    for(let i = 0; i < cellen.length; i++) if(cellen[i] === undefined) cellen[i] = "";
+    return cellen;
+  }).filter(r => r.some(x => x));
+}
+
+/* De twee exports die we kennen:
+   - AM-lijst  : twee kolommen, accountmanager + accountnaam, geen kopregel
+   - Company.info: brede export met kolomkoppen, herkenbaar aan KVK/ID          */
+
+function herkenType(rijen){
+  const kop = (rijen[0] || []).map(x => String(x).toLowerCase());
+  const heeft = n => kop.some(k => k.includes(n));
+  if(heeft("kvk") && (heeft("vennootschapsnaam") || heeft("ultimate parent"))) return "companyinfo";
+  if(rijen.some(r => r.length > 8)) return "onbekend";
+  return "amlijst";
+}
+
+const CI_VELDEN = {
+  naam:["vennootschapsnaam","organisatie"], kvk:["kvk/id","kvk"], rechtsvorm:["rechtsvorm"],
+  hoofd:["hoofd/neven"], status:["status"], sbi:["sbi_codes hoofdact"], sbiOms:["omschrijving (hoofdact)"],
+  plaats:["woonplaats"], werknemers:["aantal werknemers"], klasse:["klasse werk. pers. (kvk)"],
+  dochters:["aantal dochters"], opgericht:["datum oprichting","datum akte oprichting"],
+  domein:["domeinnaam"], parent:["ultimate parent"], parentLand:["parent country"], omzet:["turnover (€)"]
+};
+
+function bouwCi(rijen, bestand){
+  const kop = rijen[0].map(x => String(x).trim().toLowerCase());
+  const idx = {};
+  for(const [veld, namen] of Object.entries(CI_VELDEN)){
+    for(const n of namen){
+      const i = kop.findIndex(k => k === n);
+      if(i >= 0){ idx[veld] = i; break; }
+    }
+  }
+  if(idx.naam === undefined) throw new Error("Kolom met de bedrijfsnaam niet gevonden");
+  const pak = (r, veld) => idx[veld] === undefined ? "" : String(r[idx[veld]] || "").trim().replace(/^-$/, "");
+  const ent = rijen.slice(1).map(r => ({
+    naam:pak(r,"naam"), kvk:pak(r,"kvk"), rechtsvorm:pak(r,"rechtsvorm"), hoofd:pak(r,"hoofd"),
+    status:pak(r,"status"), sbi:pak(r,"sbi"), sbiOms:pak(r,"sbiOms"), plaats:pak(r,"plaats"),
+    werknemers:Number(pak(r,"werknemers")) || 0, klasse:pak(r,"klasse"),
+    dochters:Number(pak(r,"dochters")) || 0, opgericht:(pak(r,"opgericht") || "").slice(0,10),
+    domein:pak(r,"domein"), parent:pak(r,"parent"), parentLand:pak(r,"parentLand"),
+    omzet:Number(pak(r,"omzet")) || 0
+  })).filter(e => e.naam);
+
+  /* concerns via Ultimate Parent; wie geen moeder heeft staat op zichzelf */
+  const concerns = new Map();
+  ent.forEach(e => {
+    const sleutel = norm(e.parent || e.naam);
+    if(!concerns.has(sleutel)) concerns.set(sleutel, {naam:e.parent || e.naam, land:e.parentLand, leden:[]});
+    concerns.get(sleutel).leden.push(e);
+  });
+  return {bestand, ent, concerns};
+}
+
+async function laadKlantenlijst(file){
+  try{
+    const rijen = await leesBestand(file);
+    if(!rijen.length) throw new Error("Het bestand is leeg");
+    const soort = herkenType(rijen);
+    if(soort === "companyinfo"){
+      state.ci = bouwCi(rijen, file.name);
+      renderStart();
+      toast("<b>" + nl(state.ci.ent.length) + "</b> entiteiten in " +
+            nl(state.ci.concerns.size) + " concerns geladen");
+      return;
+    }
+    if(soort === "onbekend") throw new Error("Bestandsopzet niet herkend - verwacht twee kolommen (AM, accountnaam) of een Company.info-export");
+    const schoon = rijen.filter(r => r[1])
+      .filter(r => !/^(am|account\s*manager|accountmanager)$/i.test(String(r[0])))
+      .map(r => ({am:String(r[0] || "").trim(), naam:String(r[1]).trim()}));
+    if(!schoon.length) throw new Error("Geen bruikbare rijen gevonden");
+    state.klanten = schoon; state.klantBestand = file.name; state.ikBen = "";
+    renderStart();
+    toast("<b>" + nl(schoon.length) + "</b> accounts geladen uit " + esc(file.name));
+  }catch(e){
+    toast("Inlezen mislukt: " + esc(e.message));
+  }
+}
+
+/* Alleen een exacte naamovereenkomst telt. Losser matchen levert onzin op:
+   "Job Precision" werd dan "Job Direkt Personalservice", "BP Europa" werd
+   "Power-Packer Europa". Liever geen antwoord dan een verkeerd antwoord. */
+function amVoor(naam){
+  if(!state.klanten.length) return null;
+  const n = norm(naam);
+  const t = state.klanten.find(k => norm(k.naam) === n);
+  return t ? t.am : null;
+}
+
 function amStats(){
   const per = new Map();
   state.klanten.forEach(k => per.set(k.am, (per.get(k.am) || 0) + 1));
@@ -1098,7 +1170,7 @@ function klantenlijstHtml(){
     return `<div class="kl">
       <div class="kl-top">
         <h3>Klantenlijst</h3>
-        <p>Laad je eigen export (.xlsx of .csv) met de accountmanager in kolom A en de accountnaam in kolom B.
+        <p>Laad een AM-lijst (kolom A accountmanager, kolom B accountnaam) of een Company.info-export.
            Het bestand wordt in je browser uitgelezen, gaat nergens heen en wordt niet opgeslagen.</p>
         <span class="kl-file"><button class="btn btn-sm btn-primary">Bestand kiezen</button>
           <input type="file" id="kl-in" accept=".xlsx,.csv,.txt" aria-label="Klantenlijst kiezen"></span>
@@ -1135,9 +1207,39 @@ function klantenlijstHtml(){
   </div>`;
 }
 
+function ciPaneelHtml(){
+  if(!state.ci) return "";
+  const c = state.ci;
+  const groot = [...c.concerns.entries()].map(([k, v]) => ({k, naam:v.naam, n:v.leden.length}))
+    .sort((a, b) => b.n - a.n).slice(0, 6);
+  const meer = [...c.concerns.values()].filter(v => v.leden.length > 1).length;
+  const mdw = c.ent.reduce((a, e) => a + e.werknemers, 0);
+  return `<div class="kl">
+    <div class="kl-top">
+      <h3>Bedrijvenbestand</h3>
+      <p>${esc(c.bestand)} &middot; alleen in het geheugen, weg na een verversing</p>
+      <button class="btn btn-sm" id="ci-clear">Wissen</button>
+    </div>
+    <div class="kl-stat">
+      <div><b>${nl(c.ent.length)}</b> entiteiten</div>
+      <div><b>${nl(c.concerns.size)}</b> concerns</div>
+      <div><b>${nl(meer)}</b> met meerdere entiteiten</div>
+      <div><b>${nl(mdw)}</b> medewerkers</div>
+    </div>
+    <div style="margin-top:13px">
+      <div class="side-lab">Grootste concerns</div>
+      <div class="vs-filter">
+        ${groot.map(g => `<button data-ci="concern" data-sleutel="${esc(g.k)}" data-naam="${esc(g.naam)}">${esc(g.naam)} <b class="num">${g.n}</b></button>`).join("")}
+      </div>
+    </div>
+  </div>`;
+}
+
 function bindKlantenlijst(){
   const inp = $("#kl-in");
   if(inp) inp.onchange = e => { if(e.target.files[0]) laadKlantenlijst(e.target.files[0]); };
+  const ciclr = $("#ci-clear");
+  if(ciclr) ciclr.onclick = () => { state.ci = null; renderStart(); toast("Bedrijvenbestand gewist"); };
   const clr = $("#kl-clear");
   if(clr) clr.onclick = () => { state.klanten = []; state.klantBestand = ""; state.ikBen = ""; renderStart(); toast("Klantenlijst gewist"); };
   const sel = $("#kl-mij");
@@ -1246,6 +1348,193 @@ function bindApi(){
   };
 }
 
+
+/* ============================ CONCERNDOSSIER ============================
+   Gebouwd op de Company.info-export. Geen omzetgegevens van onszelf, dus het
+   dossier draait om structuur: wie hoort bij wie, hoe groot, waar, en wat
+   daaruit volgt aan gespreksvragen. */
+
+function ciZoek(term, limiet){
+  if(!state.ci) return [];
+  const qn = norm(term);
+  if(qn.length < 2) return [];
+  const uit = [];
+  state.ci.concerns.forEach((c, sleutel) => {
+    const sc = matchScore(qn, norm(c.naam));
+    if(sc >= 70) uit.push({soort:"concern", sleutel, naam:c.naam, aantal:c.leden.length, score:sc});
+  });
+  state.ci.ent.forEach(e => {
+    const sc = matchScore(qn, norm(e.naam));
+    if(sc >= 78) uit.push({soort:"entiteit", ent:e, naam:e.naam, score:sc});
+  });
+  const gezien = new Set();
+  return uit.sort((a, b) => b.score - a.score || (b.aantal || 0) - (a.aantal || 0))
+    .filter(x => { const k = x.soort + norm(x.naam); if(gezien.has(k)) return false; gezien.add(k); return true; })
+    .slice(0, limiet || 6);
+}
+
+function concernVan(ent){
+  let gevonden = null;
+  state.ci.concerns.forEach((c, k) => { if(!gevonden && c.leden.includes(ent)) gevonden = k; });
+  return gevonden;
+}
+
+/* Vragen die volgen uit wat er feitelijk in de export staat. Elke vraag draagt
+   de waarneming mee waar hij uit voortkomt, zodat je hem kunt onderbouwen. */
+function ciVragen(c){
+  const v = [];
+  const leden = groepeerPerNaam(c.leden);
+  const plaatsen = [...new Set(leden.flatMap(e => e.plaatsen))];
+  const totaalMdw = leden.reduce((a, e) => a + e.werknemers, 0);
+  const grootste = leden.slice().sort((a, b) => b.werknemers - a.werknemers)[0];
+  const failliet = leden.filter(e => /failliet|surceance/i.test(e.status));
+  const neven = c.leden.filter(e => e.hoofd === "N").length;
+  const dochters = leden.reduce((a, e) => a + e.dochters, 0);
+  const jong = leden.filter(e => e.opgericht && Number(e.opgericht.slice(0, 4)) >= 2023);
+  const omzet = leden.filter(e => e.omzet > 0).sort((a, b) => b.omzet - a.omzet)[0];
+
+  if(leden.length >= 3)
+    v.push({v:"U heeft " + leden.length + " rechtspersonen in dit concern, samen goed voor " + c.leden.length + " vestigingen. Is connectiviteit centraal belegd, of regelt elke werkmaatschappij dat zelf?",
+            w:leden.length + " rechtspersonen onder " + esc(c.naam) + " in het handelsregister", r:["beslisser","it","budget"]});
+  else if(c.leden.length >= 6)
+    v.push({v:esc(c.naam) + " heeft " + c.leden.length + " vestigingen. Hebben die allemaal een eigen verbinding, of hangen ze aan het hoofdkantoor?",
+            w:c.leden.length + " vestigingen op " + plaatsen.length + " plaatsen", r:["it","gebruiker","beslisser"]});
+  if(plaatsen.length >= 3)
+    v.push({v:"Met vestigingen in " + plaatsen.slice(0, 3).map(esc).join(", ") + (plaatsen.length > 3 ? " en nog " + (plaatsen.length - 3) + " plaatsen" : "") + " &mdash; hoe zijn die onderling verbonden?",
+            w:plaatsen.length + " verschillende vestigingsplaatsen in de export", r:["it","gebruiker"]});
+  if(c.land && c.land !== "Nederland")
+    v.push({v:"De moedermaatschappij staat geregistreerd in " + esc(c.land) + ". Wie beslist over IT-contracten voor de Nederlandse entiteiten &mdash; hier of daar?",
+            w:"Ultimate Parent " + esc(c.naam) + " heeft landcode " + esc(c.land), r:["beslisser","poortwachter","budget"]});
+  if(grootste && grootste.werknemers > 0 && leden.length > 1)
+    v.push({v:"De grootste is " + esc(grootste.naam) + " met " + nl(grootste.werknemers) + " van de " + nl(totaalMdw) + " medewerkers. Zit daar ook het IT-beheer voor de rest van de groep?",
+            w:"Grootste van " + leden.length + " rechtspersonen in dit concern", r:["it","beslisser"]});
+  if(failliet.length)
+    v.push({v:"Er staat een entiteit geregistreerd als " + esc(failliet[0].status.toLowerCase()) + ". Wat betekent dat voor de lopende contracten daar?",
+            w:esc(failliet[0].naam) + " &mdash; status " + esc(failliet[0].status), r:["beslisser","budget","poortwachter"]});
+  if(dochters > leden.length)
+    v.push({v:"Volgens het register hebben deze entiteiten samen " + dochters + " dochters, terwijl ik er " + leden.length + " in beeld heb. Welke vallen daarbuiten?",
+            w:dochters + " geregistreerde dochters tegenover " + leden.length + " entiteiten in dit overzicht", r:["beslisser","it"]});
+  if(jong.length)
+    v.push({v:esc(jong[0].naam) + " is pas in " + jong[0].opgericht.slice(0, 4) + " opgericht. Is die al aangesloten op de infrastructuur van de groep?",
+            w:"Oprichtingsdatum " + esc(jong[0].opgericht), r:["it","beslisser"]});
+  if(neven >= 2)
+    v.push({v:"Er zijn " + neven + " nevenvestigingen naast de hoofdvestigingen. Hebben die een eigen verbinding of hangen ze aan het hoofdkantoor?",
+            w:neven + " rijen met Hoofd/Neven = N", r:["it","gebruiker"]});
+  if(omzet)
+    v.push({v:"Bij een omzet van " + eur(Math.round(omzet.omzet)) + " voor " + esc(omzet.naam) + " &mdash; welk deel van de begroting gaat naar IT en connectiviteit?",
+            w:"Turnover uit de export voor " + esc(omzet.naam), r:["budget","beslisser"]});
+  return v;
+}
+
+/* Eén rechtspersoon kan meerdere rijen hebben: dat zijn vestigingen, met
+   dezelfde naam maar een andere plaats. Die horen als één entiteit te tonen. */
+function groepeerPerNaam(leden){
+  const per = new Map();
+  leden.forEach(e => {
+    const k = norm(e.naam);
+    if(!per.has(k)) per.set(k, {naam:e.naam, kvk:e.kvk, sbiOms:e.sbiOms, status:e.status,
+      hoofd:e.hoofd, opgericht:e.opgericht, omzet:e.omzet, dochters:e.dochters,
+      werknemers:0, plaatsen:[], vestigingen:0});
+    const g = per.get(k);
+    g.werknemers += e.werknemers;
+    g.vestigingen++;
+    if(e.plaats && !g.plaatsen.includes(e.plaats)) g.plaatsen.push(e.plaats);
+    if(e.omzet > g.omzet) g.omzet = e.omzet;
+    if(/failliet|surceance/i.test(e.status)) g.status = e.status;
+  });
+  return [...per.values()].sort((a, b) => b.werknemers - a.werknemers || b.vestigingen - a.vestigingen);
+}
+
+function toonConcern(sleutel){
+  const c = state.ci.concerns.get(sleutel);
+  if(!c) return;
+  const leden = groepeerPerNaam(c.leden);
+  const totaalMdw = leden.reduce((a, e) => a + e.werknemers, 0);
+  const plaatsen = [...new Set(leden.flatMap(e => e.plaatsen))];
+  const am = amVoor(c.naam) || leden.map(e => amVoor(e.naam)).find(Boolean);
+  const vragen = ciVragen(c);
+
+  $("#ov").hidden = false;
+  $("#ov").className = "overlay";
+  $("#ov").innerHTML = `
+    <div class="sheet" style="max-width:820px" role="dialog" aria-label="Concerndossier">
+      <div class="sheet-head">
+        <div style="flex:1; min-width:0"><h2>Concerndossier</h2>
+          <p>Uit je Company.info-export &middot; structuur, geen omzetgegevens van ons</p></div>
+        <button class="x" id="ov-close" aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="brief">
+        <h3>${esc(c.naam)}</h3>
+        <div class="brief-meta">${leden.length} ${leden.length === 1 ? "rechtspersoon" : "rechtspersonen"}
+          &middot; ${c.leden.length} ${c.leden.length === 1 ? "vestiging" : "vestigingen"}
+          &middot; ${nl(totaalMdw)} medewerkers &middot; ${plaatsen.length} ${plaatsen.length === 1 ? "plaats" : "plaatsen"}
+          ${c.land ? "&middot; moeder in " + esc(c.land) : ""}</div>
+
+        <div style="margin-top:16px">
+          <div class="pos-row">
+            <div class="pos-k">Accountmanager</div>
+            <div class="pos-v">${am ? esc(am) : "<span style='color:var(--ink-3);font-weight:400'>niet met zekerheid te bepalen</span>"}</div>
+          </div>
+        </div>
+        ${!am && state.klanten.length ? `<div class="kl-warn">De AM-lijst is alleen op naam te koppelen en dat gaat te vaak mis,
+          dus koppel ik uitsluitend bij een exacte overeenkomst. Zet het KvK-nummer in je AM-export en dit veld is altijd gevuld.</div>` : ""}
+
+        <div class="sec-head" style="margin:22px 0 4px"><h2 class="sec-title">Entiteiten</h2>
+          <span class="src">Company.info</span></div>
+        <div class="vs-list">
+          ${leden.map(e => `<div class="stap">
+            <div class="stap-b">
+              <div class="stap-t">${esc(e.naam)}</div>
+              <div class="stap-s">${[
+                  e.vestigingen > 1 ? e.vestigingen + " vestigingen: " + e.plaatsen.slice(0, 4).join(", ") +
+                    (e.plaatsen.length > 4 ? " +" + (e.plaatsen.length - 4) : "") : e.plaatsen[0],
+                  e.werknemers ? nl(e.werknemers) + " mdw" : "",
+                  e.sbiOms, e.kvk ? "KvK " + e.kvk : ""
+                ].filter(Boolean).map(esc).join(" &middot; ")}</div>
+            </div>
+            ${/failliet|surceance/i.test(e.status)
+              ? `<div class="stap-st wacht">${esc(e.status)}</div>`
+              : e.hoofd === "N" ? `<div class="stap-st" style="background:var(--surface-3);color:var(--ink-2)">neven</div>` : ""}
+          </div>`).join("")}
+        </div>
+
+        <div class="sec-head" style="margin:24px 0 4px"><h2 class="sec-title">Gespreksvragen uit deze structuur</h2>
+          <span class="src">${vragen.length} afgeleid</span></div>
+        <div class="vs-list">
+          ${vragen.length ? vragen.map((q, i) => `<div class="vraag">
+            <div class="vraag-n">${i + 1}</div>
+            <div class="vraag-b">
+              <div class="vraag-t">${q.v}</div>
+              <div class="vraag-w">${q.w}</div>
+              <div class="vraag-r">${q.r.map(k => `<span class="tag ${k === "beslisser" ? "beslisser" : ""}">${ROLNAAM[k]}</span>`).join("")}</div>
+            </div>
+          </div>`).join("")
+          : `<div class="vs-leeg">Te weinig gegevens over dit concern om vragen uit af te leiden.</div>`}
+        </div>
+
+        <div class="mail-foot">
+          <button class="btn btn-primary" id="ci-copy">Kopieer dossier</button>
+          <span class="hint">Structuur en vragen als platte tekst.</span>
+        </div>
+      </div>
+    </div>`;
+
+  $("#ov-close").onclick = closeOverlay;
+  $("#ov").onclick = e => { if(e.target.id === "ov") closeOverlay(); };
+  $("#ci-copy").onclick = () => {
+    const plat = x => deEnt(String(x).replace(/<[^>]+>/g, ""));
+    const tekst = [
+      plat(c.naam),
+      leden.length + " entiteiten · " + nl(totaalMdw) + " medewerkers" + (am ? " · AM: " + am : ""),
+      "", "ENTITEITEN",
+      ...leden.map(e => "- " + plat(e.naam) + (e.plaats ? " (" + e.plaats + (e.werknemers ? ", " + nl(e.werknemers) + " mdw" : "") + ")" : "")),
+      "", "GESPREKSVRAGEN",
+      ...vragen.map((q, i) => (i + 1) + ". " + plat(q.v) + "\n   → " + plat(q.w))
+    ].join("\n");
+    copy(tekst, "Concerndossier gekopieerd");
+  };
+}
+
 /* ============================ START VIEW ============================ */
 
 function renderStart(){
@@ -1267,6 +1556,7 @@ function renderStart(){
         <div id="res" hidden></div>
       </div>
       ${klantenlijstHtml()}
+      ${ciPaneelHtml()}
       <div id="api-blok">${apiHtml()}</div>
     </div>
 
@@ -1342,7 +1632,8 @@ function zoek(term){
   STUBS.forEach(s => {
     if((s[0] + " " + s[1] + " " + s[3]).toLowerCase().includes(t)) hits.push({stub:s});
   });
-  zoekKlanten(term, 6).forEach(k => hits.push({klant:k}));
+  zoekKlanten(term, 4).forEach(k => hits.push({klant:k}));
+  ciZoek(term, 6).forEach(x => hits.push({ci:x}));
   res.hidden = false;
   res.className = "results";
   if(!hits.length){
@@ -1359,6 +1650,18 @@ function zoek(term){
           <span class="result-meta">KvK ${p.kvk} &middot; ${p.plaats} &middot; ${nl(p.mdw)} mdw &middot; ${p.branche}</span>
         </span>
         <span class="src live">volledig</span>
+      </button>`;
+    }
+    if(h.ci){
+      const x = h.ci;
+      return `<button class="result" data-ci="${esc(x.soort)}" data-sleutel="${esc(x.sleutel || "")}" data-naam="${esc(x.naam)}">
+        <span class="dot" style="background:var(--ink-2)"></span>
+        <span class="result-main">
+          <span class="result-name">${esc(x.naam)}</span>
+          <span class="result-meta">${x.soort === "concern"
+            ? "Concern &middot; " + x.aantal + " entiteiten" : "Entiteit &middot; " + esc(x.ent.plaats || "")}</span>
+        </span>
+        <span class="src live">Company.info</span>
       </button>`;
     }
     if(h.klant){
@@ -1932,6 +2235,16 @@ document.addEventListener("click", e => {
   if(open){ gotoDossier(open.dataset.open); return; }
   const stub = e.target.closest("[data-stub]");
   if(stub){ toast("<b>" + stub.dataset.stub + "</b> is in deze demo niet uitgewerkt"); return; }
+  const ci = e.target.closest("[data-ci]");
+  if(ci){
+    if(ci.dataset.ci === "concern") toonConcern(ci.dataset.sleutel);
+    else {
+      const ent = state.ci.ent.find(x => x.naam === ci.dataset.naam);
+      const sleutel = ent ? concernVan(ent) : null;
+      if(sleutel) toonConcern(sleutel); else toast("Geen concern gevonden voor dit bedrijf");
+    }
+    return;
+  }
   const kl = e.target.closest("[data-klant]");
   if(kl){ const q = $("#q"); toonAccountkaart(kl.dataset.klant, q ? q.value : ""); return; }
 });
