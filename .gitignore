@@ -1,4 +1,7 @@
 lokaal/.env
 .env
 node_modules/
-*.png
+
+# testschermafdrukken, niet de app-iconen
+/res-*.png
+lokaal/res-*.png
