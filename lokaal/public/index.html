@@ -1150,6 +1150,7 @@ async function laadKlantenlijst(file){
     const soort = herkenType(rijen);
     if(soort === "companyinfo"){
       state.ci = bouwCi(rijen, file.name);
+      herbouwWoordenlijst();
       renderStart();
       toast("<b>" + nl(state.ci.ent.length) + "</b> entiteiten in " +
             nl(state.ci.concerns.size) + " concerns geladen");
@@ -1161,6 +1162,7 @@ async function laadKlantenlijst(file){
       .map(r => ({am:String(r[0] || "").trim(), naam:String(r[1]).trim()}));
     if(!schoon.length) throw new Error("Geen bruikbare rijen gevonden");
     state.klanten = schoon; state.klantBestand = file.name; state.ikBen = "";
+    herbouwWoordenlijst();
     renderStart();
     toast("<b>" + nl(schoon.length) + "</b> accounts geladen uit " + esc(file.name));
   }catch(e){
@@ -1168,14 +1170,78 @@ async function laadKlantenlijst(file){
   }
 }
 
-/* Alleen een exacte naamovereenkomst telt. Losser matchen levert onzin op:
-   "Job Precision" werd dan "Job Direkt Personalservice", "BP Europa" werd
-   "Power-Packer Europa". Liever geen antwoord dan een verkeerd antwoord. */
+
+/* --- namen koppelen op gelijkenis ---------------------------------------
+   Exact matchen levert te weinig op, want de AM-lijst en het bedrijvenbestand
+   schrijven namen anders. Losse woorden vergelijken is juist te grof: dan wordt
+   "BP Europa" een match met "Power-Packer Europa".
+   Daarom: standaardwoorden eruit (die in veel namen voorkomen en dus geen
+   identiteit dragen), en wat overblijft op tekenniveau vergelijken. Zonder die
+   eerste stap lijkt elke "Stichting Administratiekantoor X" op elke andere. */
+
+let STANDAARDWOORD = new Set();
+
+function bouwStandaardwoorden(namen){
+  const df = new Map();
+  namen.forEach(n => new Set(norm(n).split(" ")).forEach(w => df.set(w, (df.get(w) || 0) + 1)));
+  const grens = Math.max(8, Math.round(0.004 * namen.length));
+  STANDAARDWOORD = new Set([...df.entries()].filter(([, c]) => c >= grens).map(([w]) => w));
+}
+
+function kern(n){
+  const over = n.split(" ").filter(w => w && !STANDAARDWOORD.has(w));
+  return over.length ? over.join(" ") : n;
+}
+
+function bigrammen(x){
+  const t = x.replace(/ /g, ""), m = new Map();
+  if(t.length < 2) return m.set(t, 1);
+  for(let i = 0; i < t.length - 1; i++){
+    const g = t.slice(i, i + 2);
+    m.set(g, (m.get(g) || 0) + 1);
+  }
+  return m;
+}
+
+function gelijkenis(a, b){
+  const A = bigrammen(a), B = bigrammen(b);
+  let gedeeld = 0, totA = 0, totB = 0;
+  A.forEach((v, k) => { totA += v; if(B.has(k)) gedeeld += Math.min(v, B.get(k)); });
+  B.forEach(v => totB += v);
+  return (totA + totB) ? 2 * gedeeld / (totA + totB) : 0;
+}
+
+/* De AM-export schrijft "Co?peratie" waar "Coöperatie" hoort: het vraagteken
+   vervangt een letter. Na normalisatie scheelt dat een teken, en dat kost te veel
+   gelijkenis. Daarom vergelijken we ook een skelet waarin dubbele letters zijn
+   ingeklapt, en nemen we de hoogste van de twee. */
+function skelet(x){ return x.replace(/([a-z])\1+/g, "$1"); }
+
+/* exact = zeker; >=0.88 = sterk; >=0.75 = controleren; daaronder niets */
+const ZEKER = 0.88, TWIJFEL = 0.75;
+
 function amVoor(naam){
   if(!state.klanten.length) return null;
   const n = norm(naam);
-  const t = state.klanten.find(k => norm(k.naam) === n);
-  return t ? t.am : null;
+  const exact = state.klanten.find(k => norm(k.naam) === n);
+  if(exact) return {am:exact.am, zekerheid:"exact", score:1, naam:exact.naam};
+  const k = kern(n);
+  if(!k.replace(/ /g, "")) return null;
+  let best = null, top = 0;
+  state.klanten.forEach(x => {
+    const kx = kern(norm(x.naam));
+    const d = Math.max(gelijkenis(k, kx), gelijkenis(skelet(k), skelet(kx)));
+    if(d > top){ top = d; best = x; }
+  });
+  if(!best || top < TWIJFEL) return null;
+  return {am:best.am, zekerheid: top >= ZEKER ? "sterk" : "controleren", score:top, naam:best.naam};
+}
+
+function herbouwWoordenlijst(){
+  const namen = [];
+  if(state.ci) state.ci.ent.forEach(e => { namen.push(e.naam); if(e.parent) namen.push(e.parent); });
+  state.klanten.forEach(k => namen.push(k.naam));
+  if(namen.length) bouwStandaardwoorden(namen);
 }
 
 function amStats(){
@@ -1600,7 +1666,7 @@ function toonConcern(sleutel){
   const leden = groepeerPerNaam(c.leden);
   const totaalMdw = leden.reduce((a, e) => a + e.werknemers, 0);
   const plaatsen = [...new Set(leden.flatMap(e => e.plaatsen))];
-  const am = amVoor(c.naam) || leden.map(e => amVoor(e.naam)).find(Boolean);
+  const am = amVoor(c.naam) || leden.map(e => amVoor(e.naam)).find(Boolean) || null;
   const vragen = ciVragen(c);
 
   $("#ov").hidden = false;
@@ -1622,11 +1688,20 @@ function toonConcern(sleutel){
         <div style="margin-top:16px">
           <div class="pos-row">
             <div class="pos-k">Accountmanager</div>
-            <div class="pos-v">${am ? esc(am) : "<span style='color:var(--ink-3);font-weight:400'>niet met zekerheid te bepalen</span>"}</div>
+            <div class="pos-v">${!am ? "<span style='color:var(--ink-3);font-weight:400'>niet gevonden in je AM-lijst</span>"
+              : isPersoon(am.am) ? esc(am.am)
+              : "<span style='color:var(--red)'>niet toegewezen &mdash; &ldquo;" + esc(am.am) + "&rdquo;</span>"}</div>
           </div>
+          ${am && am.zekerheid !== "exact" ? `<div class="pos-row">
+            <div class="pos-k">Koppeling</div>
+            <div class="pos-v" style="font-size:13px; text-align:right; max-width:65%">
+              <span class="am-chip ${am.zekerheid === "sterk" ? "" : "leeg"}">${am.zekerheid === "sterk" ? "sterke gelijkenis" : "controleren"}</span>
+              <span style="color:var(--ink-3); font-weight:400"> ${Math.round(am.score * 100)}% met &ldquo;${esc(am.naam)}&rdquo;</span>
+            </div>
+          </div>` : ""}
         </div>
-        ${!am && state.klanten.length ? `<div class="kl-warn">De AM-lijst is alleen op naam te koppelen en dat gaat te vaak mis,
-          dus koppel ik uitsluitend bij een exacte overeenkomst. Zet het KvK-nummer in je AM-export en dit veld is altijd gevuld.</div>` : ""}
+        ${!am && state.klanten.length ? `<div class="kl-warn">Geen naam in je AM-lijst die hier genoeg op lijkt.
+          Dat betekent meestal dat dit bedrijf er niet in staat, niet dat de koppeling faalt.</div>` : ""}
 
         <div class="sec-head" style="margin:22px 0 4px"><h2 class="sec-title">Entiteiten</h2>
           <span class="src">Company.info</span></div>
@@ -2339,8 +2414,16 @@ function toonAccountkaart(naam, zoekterm){
         <div style="margin-top:16px">
           <div class="pos-row">
             <div class="pos-k">Accountmanager</div>
-            <div class="pos-v">${isPersoon(am) ? esc(am) : "niet toegewezen &mdash; staat op &ldquo;" + esc(am) + "&rdquo;"}</div>
+            <div class="pos-v">${!am ? "<span style='color:var(--ink-3);font-weight:400'>niet gevonden in je AM-lijst</span>"
+              : isPersoon(am.am) ? esc(am.am) : "niet toegewezen &mdash; staat op &ldquo;" + esc(am.am) + "&rdquo;"}</div>
           </div>
+          ${am && am.zekerheid !== "exact" ? `<div class="pos-row">
+            <div class="pos-k">Koppeling</div>
+            <div class="pos-v" style="font-size:13px">
+              <span class="am-chip ${am.zekerheid === "sterk" ? "" : "leeg"}">${am.zekerheid === "sterk" ? "sterke gelijkenis" : "controleren"}</span>
+              <span style="color:var(--ink-3); font-weight:400"> met &ldquo;${esc(am.naam)}&rdquo; (${Math.round(am.score * 100)}%)</span>
+            </div>
+          </div>` : ""}
           ${state.ikBen ? `<div class="pos-row">
             <div class="pos-k">Van jou?</div>
             <div class="pos-v">${am === state.ikBen ? "Ja" : isPersoon(am) ? "Nee &mdash; ligt bij een collega" : "Nee &mdash; nog van niemand"}</div>
