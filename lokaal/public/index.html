@@ -748,6 +748,18 @@ const PROSPECTS = [
 }
 ];
 
+/* Wie is verantwoordelijk voor welke entiteit. Alleen gevuld waar een relatie
+   bestaat; bij een witte vlek blijft het leeg, en die leegte is zelf het
+   antwoord: daar zit niemand van ons op. */
+const EIGENAARS = {
+  "Van Oordt Logistics Group B.V.":"jij",
+  "Van Oordt Wegtransport B.V.":"Sanne Verhoeven",
+  "Van Oordt Koeltransport B.V.":"Sanne Verhoeven",
+  "Oordt Fresh Logistics B.V.":"Dirk Bakhuis",
+  "Nordkamp Retail Holding B.V.":"Mark Heemskerk",
+  "Kamphuis Interieur B.V.":"Mark Heemskerk"
+};
+
 const STUBS = [
   ["Meridiaan Bouwgroep N.V.","Rotterdam",1180,"Bouw"],
   ["Delta Installatietechniek B.V.","Dordrecht",640,"Installatie"],
@@ -768,6 +780,11 @@ const STUBS = [
   ["Argos Techniek Holding","Helmond",670,"Techniek"],
   ["Lingehof Zorgvastgoed","Gorinchem",280,"Zorg"]
 ];
+
+PROSPECTS.forEach(p => walkNu(p.tree, n => {
+  if(n.status !== "wit" && EIGENAARS[n.naam]) n.eigenaar = EIGENAARS[n.naam];
+}));
+function walkNu(node, fn){ fn(node); (node.kinderen || []).forEach(k => walkNu(k, fn)); }
 
 /* ============================ MAIL-COPY ============================ */
 
@@ -1765,6 +1782,10 @@ function renderDossier(){
               <div class="pos-v num">${actief} <span style="color:var(--ink-3); font-weight:400">/ ${t.totaal}</span></div>
             </div>
             <div class="pos-row">
+              <div class="pos-k">Accounteigenaar</div>
+              <div class="pos-v" style="font-size:14px">${eigenaarTekst(here)}</div>
+            </div>
+            <div class="pos-row">
               <div class="pos-k">Contract</div>
               <div class="pos-v" style="font-size:13px; text-align:right; max-width:60%">${p.contract}</div>
             </div>
@@ -1816,6 +1837,16 @@ function renderDossier(){
   bindDossier();
 }
 
+function eigenaarTekst(node){
+  const namen = [];
+  walk(node, n => { if(n.eigenaar && !namen.includes(n.eigenaar)) namen.push(n.eigenaar); });
+  if(!namen.length) return "<span style='color:var(--red)'>niemand &mdash; volledig witte vlek</span>";
+  if(namen.length === 1) return namen[0] === "jij" ? "jij" : esc(namen[0]);
+  const anderen = namen.filter(n => n !== "jij");
+  return (namen.includes("jij") ? "jij en " : "") +
+    anderen.map(esc).join(" en ") + " <span style='color:var(--ink-3);font-weight:400'>(" + namen.length + " eigenaren)</span>";
+}
+
 function barHtml(t){
   const order = [["klant", t.klant], ["deels", t.deels], ["wit", t.wit]];
   return '<div class="bar" role="img" aria-label="' +
@@ -1850,6 +1881,7 @@ function treeHtml(node, path){
         <span class="node-name">${node.naam}</span><br>
         <span class="node-meta">${node.plaats} &middot; ${nl(node.mdw)} mdw${node.note ? " &middot; " + node.note : ""}</span>
       </span>
+      ${node.eigenaar ? `<span class="am-chip ${node.eigenaar === "jij" ? "mij" : ""}">${node.eigenaar === "jij" ? "van jou" : esc(node.eigenaar)}</span>` : ""}
       ${node.arr ? `<span class="node-arr">${eur(node.arr)}</span>` : ""}
     </button>
     ${kids.length ? kids.map((k, i) => treeHtml(k, path.concat(i))).join("") : ""}
