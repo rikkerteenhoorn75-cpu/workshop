@@ -132,6 +132,106 @@ async function doorgeven(bronId, restPad, req, res){
   }
 }
 
+
+/* ---------- DMU ophalen bij Lusha ----------
+ * Eigen eindpunt in plaats van het kale doorgeefluik, zodat de browser niets
+ * van Lusha's verzoekopbouw hoeft te weten.
+ *
+ * De verzoekstructuur (filters.contacts.include.*) en de geldige
+ * seniority-waarden komen uit een echte foutmelding van de API. De
+ * responsafhandeling is defensief: als Lusha een ander veld teruggeeft dan
+ * verwacht, komt de ruwe respons mee onder "ruw" zodat je ziet wat er binnenkwam.
+ */
+
+const SENIORITY = ["c-suite", "vice president", "director", "manager", "partner", "founder"];
+
+/* Afdeling en niveau vertalen naar de rol die in het gesprek telt. */
+function rolVan(afdelingen, niveau){
+  const a = (afdelingen || []).join(" ").toLowerCase();
+  if(/c-suite|founder|owner/.test(niveau || "")) return {klasse:"beslisser", label:"beslisser"};
+  if(/financ|account|controlling/.test(a))       return {klasse:"budget", label:"beslisser budget"};
+  if(/purchas|procure|inkoop|supply/.test(a))    return {klasse:"poortwachter", label:"poortwachter"};
+  if(/information technology|engineering|technolog/.test(a)) return {klasse:"it", label:"beïnvloeder"};
+  if(/operations|facilit|logisti|support/.test(a)) return {klasse:"gebruiker", label:"gebruiker"};
+  return {klasse:"it", label:"beïnvloeder"};
+}
+
+async function dmuOphalen(req, res){
+  const bron = BRONNEN.lusha;
+  if(!bron.sleutel){
+    return json(res, 503, {
+      fout: "Lusha-sleutel ontbreekt",
+      oplossing: "Zet LUSHA_API_KEY in lokaal/.env en herstart de server."
+    });
+  }
+  let vraag;
+  try{ vraag = JSON.parse(await leesBody(req) || "{}"); }
+  catch(e){ return json(res, 400, {fout:"Ongeldige JSON in het verzoek"}); }
+
+  const bedrijf = String(vraag.bedrijf || "").trim();
+  if(!bedrijf) return json(res, 400, {fout:"Geef een bedrijfsnaam mee"});
+
+  const payload = {
+    pages: {page: 0, size: Math.min(Number(vraag.aantal) || 25, 50)},
+    filters: {
+      companies: {include: {names: [bedrijf]}},
+      contacts: {include: {
+        countries: [String(vraag.land || "NL")],
+        senioritiesLabels: Array.isArray(vraag.niveaus) && vraag.niveaus.length ? vraag.niveaus : SENIORITY
+      }}
+    }
+  };
+
+  const url = bron.basis.replace(/\/+$/, "") + "/v3/contacts/prospecting";
+  try{
+    const antwoord = await fetch(url, {
+      method: "POST",
+      headers: {[bron.header]: bron.sleutel, "content-type":"application/json", accept:"application/json"},
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(Number(env.TIMEOUT_MS || 20000))
+    });
+    const tekst = await antwoord.text();
+    let data = null;
+    try{ data = JSON.parse(tekst); }catch(e){ /* geen JSON */ }
+    console.log(`  POST Lusha /v3/contacts/prospecting "${bedrijf}" -> ${antwoord.status}`);
+
+    if(!antwoord.ok || !data){
+      return json(res, antwoord.status || 502, {
+        fout: "Lusha gaf een fout terug",
+        status: antwoord.status,
+        ruw: (tekst || "").slice(0, 2000),
+        hint: antwoord.status === 401 ? "Klopt de headernaam? Pas LUSHA_HEADER aan in .env."
+            : antwoord.status === 403 ? "De sleutel mag dit eindpunt niet."
+            : "Zie 'ruw' voor wat Lusha precies antwoordde."
+      });
+    }
+    const lijst = Array.isArray(data.results) ? data.results
+                : Array.isArray(data.data) ? data.data : [];
+    const contacten = lijst.map(c => {
+      const titel = c.jobTitle || {};
+      const rol = rolVan(titel.departments, titel.seniority);
+      return {
+        id: c.id, naam: [c.firstName, c.lastName].filter(Boolean).join(" ") || "(naam onbekend)",
+        rol: titel.title || "", afdeling: (titel.departments || []).join(", "),
+        niveau: titel.seniority || "", klasse: rol.klasse, label: rol.label,
+        linkedin: (c.socialLinks || {}).linkedin || "",
+        plaats: (c.location || {}).city || "", bedrijf: (c.company || {}).name || bedrijf,
+        kanOnthullen: (c.canReveal || []).map(x => x.field + (x.credits ? " (" + x.credits + " cr)" : " (gratis)"))
+      };
+    });
+    json(res, 200, {
+      bedrijf, gevonden: (data.pagination || {}).total ?? contacten.length,
+      opgehaald: contacten.length, credits: (data.billing || {}).creditsCharged ?? null,
+      contacten,
+      /* let op: geen e-mail of telefoon - die kosten extra credits per contact */
+      opmerking: "E-mailadressen en telefoonnummers zijn niet opgehaald; die kosten extra credits per contact."
+    });
+  }catch(e){
+    console.log(`  POST Lusha "${bedrijf}" -> MISLUKT: ${e.message}`);
+    json(res, 502, {fout:"Kon Lusha niet bereiken", detail:e.message});
+  }
+}
+
 /* ---------- statische bestanden ---------- */
 function statisch(req, res, pad){
   const doel = path.join(PUBLIEK, pad === "/" ? "index.html" : pad);
@@ -160,6 +260,7 @@ const server = http.createServer(async (req, res) => {
       }]))
     });
   }
+  if(pad === "/api/dmu" && req.method === "POST") return dmuOphalen(req, res);
   const m = pad.match(/^\/api\/(companyinfo|lusha)\/(.*)$/);
   if(m) return doorgeven(m[1], m[2], req, res);
   if(pad.startsWith("/api/")) return json(res, 404, {fout:"Onbekend eindpunt"});

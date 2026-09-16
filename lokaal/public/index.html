@@ -882,6 +882,8 @@ const state = {
   rolFilter:"alle",
   klanten:[],
   ci:null,
+  ciDmu:null,
+  ciBezig:false,
   api:null,
   klantBestand:"",
   ikBen:"",
@@ -1462,6 +1464,105 @@ function groepeerPerNaam(leden){
   return [...per.values()].sort((a, b) => b.werknemers - a.werknemers || b.vestigingen - a.vestigingen);
 }
 
+
+/* ---------- contactpersonen ophalen via de lokale server ---------- */
+
+async function haalDmu(sleutel){
+  const c = state.ci.concerns.get(sleutel);
+  if(!c || state.ciBezig) return;
+  state.ciBezig = true; toonConcern(sleutel);
+  try{
+    const a = await fetch("/api/dmu", {
+      method:"POST", headers:{"content-type":"application/json"},
+      body: JSON.stringify({bedrijf: deEnt(c.naam), land:"NL", aantal:25}),
+      signal: AbortSignal.timeout(30000)
+    });
+    const d = await a.json();
+    if(!a.ok){
+      state.ciDmu = {sleutel, fout: d.fout + (d.hint ? " — " + d.hint : "")};
+    } else {
+      state.ciDmu = {sleutel, contacten:d.contacten || [], gevonden:d.gevonden, credits:d.credits};
+      if(!d.contacten || !d.contacten.length)
+        state.ciDmu.fout = "Lusha kent geen contactpersonen onder deze naam. Probeer een werkmaatschappij in plaats van de holding.";
+    }
+  }catch(e){
+    state.ciDmu = {sleutel, fout: e.name === "TimeoutError" ? "Lusha reageerde niet binnen 30 seconden" : e.message};
+  }
+  state.ciBezig = false;
+  toonConcern(sleutel);
+}
+
+/* Een opgehaald concern omvormen tot iets dat de Outreach Studio begrijpt, zodat
+   de bestaande mailopbouw hergebruikt wordt in plaats van gedupliceerd. */
+function ciAlsProspect(c, contacten){
+  const leden = groepeerPerNaam(c.leden);
+  const plaatsen = [...new Set(leden.flatMap(e => e.plaatsen))];
+  const mdw = leden.reduce((a, e) => a + e.werknemers, 0);
+  const feit = leden.length > 1
+    ? "dat " + deEnt(c.naam) + " uit " + leden.length + " rechtspersonen bestaat, samen goed voor " + c.leden.length + " vestigingen"
+    : "dat " + deEnt(c.naam) + " " + c.leden.length + " vestigingen heeft in Nederland";
+  /* de plaatsen alleen noemen als dat iets toevoegt: "18 vestigingen verspreid
+     over 18 plaatsen" is geen waarneming maar ruis */
+  const opener = "In het handelsregister zag ik " + feit +
+    (plaatsen.length > 2 && plaatsen.length < c.leden.length ? ", verspreid over " + plaatsen.length + " plaatsen" : "") +
+    (mdw ? ", met samen ongeveer " + nl(mdw) + " medewerkers" : "") + ".";
+  return {
+    id:"ci", naam:deEnt(c.naam), kort:deEnt(c.naam), kvk:"", plaats:plaatsen[0] || "", mdw:mdw,
+    sbi:leden[0] ? leden[0].sbiOms : "", opgericht:"", status:"wit", contract:"",
+    aanleiding:"de structuur van uw organisatie zoals die in het handelsregister staat",
+    opener:{bestuur:opener, operatie:opener},
+    tree:{naam:deEnt(c.naam), plaats:plaatsen[0] || "", mdw:mdw, status:"wit", arr:0, kinderen:
+      leden.map(e => ({naam:e.naam, plaats:e.plaatsen[0] || "", mdw:e.werknemers, status:"wit", arr:0, kinderen:[]}))},
+    signalen:[], vragen:[], punten:[],
+    dmu:contacten.map((x, i) => ({
+      id:"c" + i, naam:x.naam, rol:x.rol || x.afdeling || "onbekend", label:x.label, klasse:x.klasse,
+      mail:"niet opgehaald", tel:"niet opgehaald",
+      extra:[x.plaats, x.niveau].filter(Boolean).join(" · ") || x.afdeling
+    }))
+  };
+}
+
+function dmuNaarStudio(sleutel){
+  const c = state.ci.concerns.get(sleutel);
+  const d = state.ciDmu;
+  if(!c || !d || !d.contacten || !d.contacten.length) return;
+  state.prospect = ciAlsProspect(c, d.contacten);
+  state.sel = state.prospect.dmu.slice(0, 2).map(x => x.id);
+  state.tab = 0;
+  renderStudio();
+}
+
+function dmuBlokHtml(sleutel){
+  const beschikbaar = state.api && state.api.bronnen && state.api.bronnen.lusha
+    && state.api.bronnen.lusha.sleutelIngesteld;
+  const d = state.ciDmu && state.ciDmu.sleutel === sleutel ? state.ciDmu : null;
+  if(!beschikbaar){
+    return `<div class="sec-head" style="margin:24px 0 4px"><h2 class="sec-title">Contactpersonen</h2>
+        <span class="src">Lusha</span></div>
+      <div class="kl-warn">Contactpersonen ophalen vraagt de lokale server met een Lusha-sleutel.
+        Zet <span class="num">LUSHA_API_KEY</span> in <span class="num">lokaal/.env</span> en herstart.</div>`;
+  }
+  return `<div class="sec-head" style="margin:24px 0 4px"><h2 class="sec-title">Contactpersonen</h2>
+      <span class="src live">Lusha</span>${d && d.gevonden != null ? `<span class="src">${nl(d.gevonden)} gevonden</span>` : ""}</div>
+    ${d && d.fout ? `<div class="kl-warn">${esc(d.fout)}</div>` : ""}
+    ${d && d.contacten && d.contacten.length ? `<div class="vs-list">
+      ${d.contacten.map(x => `<div class="stap">
+        <div class="stap-b">
+          <div class="stap-t">${esc(x.naam)}</div>
+          <div class="stap-s">${[x.rol, x.plaats, x.afdeling].filter(Boolean).map(esc).join(" &middot; ")}</div>
+        </div>
+        <div class="stap-st" style="background:var(--accent-soft);color:var(--accent)">${esc(x.label)}</div>
+      </div>`).join("")}
+    </div>` : ""}
+    <div class="mail-foot">
+      <button class="btn ${d && d.contacten && d.contacten.length ? "" : "btn-primary"}" id="dmu-haal"
+        ${state.ciBezig ? "disabled" : ""}>${state.ciBezig ? "Bezig…" : d ? "Opnieuw ophalen" : "Haal contactpersonen op"}</button>
+      ${d && d.contacten && d.contacten.length
+        ? `<button class="btn btn-primary" id="dmu-studio">Stel mails op</button>` : ""}
+      <span class="hint">Zoekopdracht kost 1 credit per 25 resultaten. E-mail en telefoon worden niet opgehaald.</span>
+    </div>`;
+}
+
 function toonConcern(sleutel){
   const c = state.ci.concerns.get(sleutel);
   if(!c) return;
@@ -1529,6 +1630,8 @@ function toonConcern(sleutel){
           : `<div class="vs-leeg">Te weinig gegevens over dit concern om vragen uit af te leiden.</div>`}
         </div>
 
+        ${dmuBlokHtml(sleutel)}
+
         <div class="mail-foot">
           <button class="btn btn-primary" id="ci-copy">Kopieer dossier</button>
           <span class="hint">Structuur en vragen als platte tekst.</span>
@@ -1538,6 +1641,10 @@ function toonConcern(sleutel){
 
   $("#ov-close").onclick = closeOverlay;
   $("#ov").onclick = e => { if(e.target.id === "ov") closeOverlay(); };
+  const haal = $("#dmu-haal");
+  if(haal) haal.onclick = () => haalDmu(sleutel);
+  const st = $("#dmu-studio");
+  if(st) st.onclick = () => dmuNaarStudio(sleutel);
   $("#ci-copy").onclick = () => {
     const plat = x => deEnt(String(x).replace(/<[^>]+>/g, ""));
     const tekst = [

@@ -48,7 +48,23 @@ een lege of afgekapte waarde hebt geplakt.
 | Naam zoeken en de accountmanager tonen | werkt, ook zonder server |
 | Demo-dossiers, vragenset, mails | werkt, ook zonder server |
 | API-verkenner | alleen lokaal, met sleutel |
-| Concernstructuur, signalen en contactpersonen uit de API | **nog niet** — zie hieronder |
+| Company.info-export inlezen: concerns, structuur, afgeleide vragen | werkt, ook zonder server |
+| Contactpersonen ophalen bij Lusha | alleen lokaal, met `LUSHA_API_KEY` |
+| Concernstructuur en signalen live uit Company.info | **nog niet** — zie hieronder |
+
+## Contactpersonen ophalen
+
+Open een concern uit je Company.info-export en klik **Haal contactpersonen op**.
+De server bevraagt Lusha (`POST /v3/contacts/prospecting`) en vertaalt de uitkomst
+naar de rollen die in het gesprek tellen: beslisser, budget, beïnvloeder,
+gebruiker, poortwachter. Daarna kun je direct mails opstellen.
+
+Kosten: 1 credit per 25 resultaten. E-mailadressen en telefoonnummers worden
+**niet** opgehaald — die kosten 1 respectievelijk 5 credits per contact.
+
+Getest tegen een nagebouwde Lusha-respons, niet tegen de echte API. De
+verzoekstructuur en de geldige seniority-waarden komen uit een echte foutmelding
+van Lusha. Werkt het niet, dan staat de ruwe respons in het antwoord onder `ruw`.
 
 ## De volgende stap: eindpunten vinden
 
