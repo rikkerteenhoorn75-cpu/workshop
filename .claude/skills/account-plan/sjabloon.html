@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Accountplan {{BEDRIJF}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@600&display=swap">
+<style>
+:root{
+  --bg:#EDF0EF; --surface:#FFFFFF; --surface-2:#F5F8F7; --surface-3:#E6ECEA;
+  --ink:#121D21; --ink-2:#465A5F; --ink-3:#798A8D;
+  --line:#D7E0DD; --line-2:#C0CCC9;
+  --accent:#0B5A67; --accent-soft:#DBEAED;
+  --red:#A63A2B; --red-soft:#F6E2DE;
+  --amber:#8F6A0E; --amber-soft:#F5EDD8;
+  --green:#2F6B45; --green-soft:#DFEDE4;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0C1417; --surface:#141F22; --surface-2:#1A2629; --surface-3:#223034;
+  --ink:#E7EEEC; --ink-2:#A1B1B4; --ink-3:#76868A;
+  --line:#27373A; --line-2:#35474B;
+  --accent:#58B9C8; --accent-soft:#10333A;
+  --red:#E68877; --red-soft:#381F1A;
+  --amber:#D6AC57; --amber-soft:#31270F;
+  --green:#6CBE89; --green-soft:#14301E;
+}}
+*{box-sizing:border-box}
+body{margin:0; background:var(--bg); color:var(--ink);
+  font-family:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,sans-serif; font-size:15px; line-height:1.55;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:900px; margin:0 auto; padding-inline:22px; padding-block:38px 80px}
+h1,h2,h3{margin:0; text-wrap:balance; letter-spacing:-.02em}
+p{margin:0}
+.num{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+
+.kicker{font-size:11.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); font-weight:600}
+h1{font-family:"IBM Plex Serif",Georgia,serif; font-size:clamp(30px,5vw,44px); font-weight:600; margin-top:9px}
+.sub{color:var(--ink-2); margin-top:11px; font-size:14.5px}
+.bron{font-family:"IBM Plex Mono",monospace; font-size:11.5px; color:var(--ink-3); margin-top:5px}
+
+.tegels{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:12px; margin-top:28px}
+.tegel{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:15px 17px}
+.tegel b{display:block; font-family:"IBM Plex Mono",monospace; font-size:30px; font-weight:600; letter-spacing:-.03em; line-height:1.1}
+.tegel span{display:block; font-size:12.5px; color:var(--ink-3); margin-top:5px}
+.tegel.let{background:var(--amber-soft); border-color:transparent}
+.tegel.let b{color:var(--amber)}
+.tegel.let span{color:var(--amber)}
+
+section{margin-top:40px}
+h2{font-size:12px; letter-spacing:.11em; text-transform:uppercase; color:var(--ink-2); font-weight:600;
+   padding-bottom:9px; border-bottom:1px solid var(--line); margin-bottom:17px}
+
+table{width:100%; border-collapse:collapse; font-size:14px}
+th{text-align:left; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3);
+   font-weight:600; padding:0 12px 8px 0; border-bottom:1px solid var(--line)}
+td{padding:11px 12px 11px 0; border-bottom:1px solid var(--line); vertical-align:top}
+tr:last-child td{border-bottom:none}
+.tabelwrap{overflow-x:auto}
+
+.inzicht{background:var(--amber-soft); color:var(--amber); border-radius:10px; padding:16px 19px; font-size:14.5px; line-height:1.6}
+.inzicht b{font-weight:600}
+.let{background:var(--red-soft); color:var(--red); border-radius:8px; padding:12px 15px; font-size:13.5px; margin-top:14px}
+
+.rollen{display:grid; grid-template-columns:repeat(auto-fit,minmax(255px,1fr)); gap:14px}
+.rol{background:var(--surface); border:1px solid var(--line); border-radius:10px; padding:15px 17px}
+.rol h3{font-size:11.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:11px}
+.persoon{padding:8px 0; border-bottom:1px dashed var(--line)}
+.persoon:last-child{border-bottom:none}
+.persoon b{font-weight:600; font-size:14px}
+.persoon span{display:block; font-size:12.5px; color:var(--ink-2); margin-top:1px}
+.persoon.ster{background:var(--accent-soft); margin:4px -8px; padding:9px 8px; border-radius:6px; border-bottom:none}
+.persoon.ster b{color:var(--accent)}
+
+.vraag{display:flex; gap:15px; padding:16px 0; border-bottom:1px solid var(--line)}
+.vraag:last-child{border-bottom:none}
+.vn{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--ink-3); flex:none; width:20px; text-align:right; padding-top:3px}
+.vb{flex:1; min-width:0}
+.vt{font-size:15.5px; line-height:1.5; text-wrap:pretty}
+.vw{font-size:12.5px; color:var(--ink-3); margin-top:7px; padding-left:12px; border-left:2px solid var(--line-2); line-height:1.5}
+.tags{display:flex; gap:5px; flex-wrap:wrap; margin-top:9px}
+.tag{font-size:10.5px; font-weight:600; letter-spacing:.05em; text-transform:uppercase;
+     padding:2px 8px; border-radius:4px; background:var(--surface-3); color:var(--ink-2)}
+.tag.b{background:var(--accent-soft); color:var(--accent)}
+
+.stap{display:flex; gap:15px; padding:15px 0; border-bottom:1px solid var(--line)}
+.stap:last-child{border-bottom:none}
+.sn{flex:none; width:26px; height:26px; border-radius:50%; background:var(--accent); color:var(--surface);
+    display:grid; place-items:center; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600}
+.stap h3{font-size:15px; font-weight:600; margin-bottom:4px}
+.stap p{font-size:14px; color:var(--ink-2)}
+
+footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line);
+  font-size:12.5px; color:var(--ink-3); line-height:1.6}
+@media print{
+  body{background:#fff} .wrap{padding-block:0} section{break-inside:avoid} .vraag{break-inside:avoid}
+}
+/* conceptmails */
+.mails{display:flex; flex-direction:column; gap:16px}
+.mail{background:var(--surface); border:1px solid var(--line); border-radius:10px; overflow:hidden}
+.mail-kop{display:flex; align-items:center; gap:11px; flex-wrap:wrap;
+  padding:12px 17px; background:var(--surface-2); border-bottom:1px solid var(--line)}
+.mail-kop b{font-size:14.5px; font-weight:600}
+.mail-kop span{font-size:12.5px; color:var(--ink-3)}
+.mail-onderwerp{padding:13px 17px 0; font-weight:600; font-size:14.5px}
+.mail-body{padding:11px 17px 17px; font-size:14px; line-height:1.65; white-space:pre-wrap; color:var(--ink-2)}
+.hoek{display:inline-flex; align-items:center; gap:6px; font-size:11px; font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase; padding:3px 9px; border-radius:20px;
+  background:var(--accent-soft); color:var(--accent)}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="kicker">Accountplan</div>
+<h1>{{BEDRIJF}}</h1>
+<p class="sub">{{EEN_ZIN_DIE_DE_KERN_RAAKT}}</p>
+<p class="bron">{{DATUM}} · {{ACCOUNTMANAGER}} · {{GEBRUIKTE_BRONNEN}}</p>
+
+<!-- Vier kerncijfers. Gebruik class="tegel let" voor het cijfer dat aandacht vraagt. -->
+<div class="tegels">
+  <div class="tegel"><b>{{N}}</b><span>{{LABEL}}</span></div>
+  <div class="tegel"><b>{{N}}</b><span>{{LABEL}}</span></div>
+  <div class="tegel"><b>{{N}}</b><span>{{LABEL}}</span></div>
+  <div class="tegel let"><b>{{N}}</b><span>{{LABEL}}</span></div>
+</div>
+
+<section>
+  <h2>Concernstructuur</h2>
+  <div class="tabelwrap"><table>
+    <tr><th>Rechtspersoon</th><th>KvK</th><th>Opgericht</th><th>Activiteit</th><th>Vest.</th></tr>
+    <tr><td><b>{{NAAM}}</b></td><td class="num">{{KVK}}</td><td class="num">{{DATUM}}</td>
+        <td>{{SBI}}</td><td class="num">{{N}}</td></tr>
+  </table></div>
+  <!-- Eén waarneming die het gesprek stuurt. Weglaten als die er niet is. -->
+  <div class="inzicht" style="margin-top:18px">{{WAARNEMING}}</div>
+</section>
+
+<section>
+  <h2>Onze positie</h2>
+  <div class="tabelwrap"><table>
+    <tr><td style="width:190px; color:var(--ink-3)">Accountmanager</td><td>{{AM_MET_ZEKERHEID}}</td></tr>
+    <tr><td style="color:var(--ink-3)">Omzet</td><td>{{OMZET_OF_ONBEKEND}}</td></tr>
+    <tr><td style="color:var(--ink-3)">Dekking per entiteit</td><td>{{DEKKING_OF_ONBEKEND}}</td></tr>
+  </table></div>
+</section>
+
+<section>
+  <h2>Ingangen · {{TOTAAL}} gevonden, {{OPGEHAALD}} opgehaald</h2>
+  <div class="rollen">
+    <!-- Kolommen: Beslissers, Budget, Beïnvloeders — IT, Gebruikers — operatie, Poortwachters.
+         Laat een kolom weg als er niemand in zit; verzin geen namen.
+         class="persoon ster" voor de persoon waar je zou beginnen. -->
+    <div class="rol"><h3>{{ROL}}</h3>
+      <div class="persoon ster"><b>{{NAAM}}</b><span>{{FUNCTIE}}</span></div>
+      <div class="persoon"><b>{{NAAM}}</b><span>{{FUNCTIE}}</span></div>
+    </div>
+  </div>
+  <!-- Een ontbrekende rol of een tegenstrijdigheid in de data hoort hier. -->
+  <div class="let">{{WAARSCHUWING}}</div>
+</section>
+
+<section>
+  <h2>Gespreksvragen</h2>
+  <!-- Acht à tien. Elke vraag met de waarneming waar hij uit volgt. -->
+  <div class="vraag"><div class="vn">1</div><div class="vb">
+    <div class="vt">{{VRAAG}}</div>
+    <div class="vw">{{WAARNEMING}}</div>
+    <div class="tags"><span class="tag b">Beslisser</span><span class="tag">Budget</span></div></div></div>
+</section>
+
+<section>
+  <h2>Conceptmails</h2>
+  <p class="sub" style="margin-bottom:17px">Invalshoek: <span class="hoek">{{INVALSHOEK}}</span> —
+    {{WAAROM_DEZE_INVALSHOEK}}</p>
+  <div class="mails">
+    <!-- Eén mail per rol die je als eerste benadert, meestal twee of drie. -->
+    <div class="mail">
+      <div class="mail-kop"><b>{{NAAM}}</b><span>{{FUNCTIE}}</span><span class="tag b">{{ROL}}</span></div>
+      <div class="mail-onderwerp">{{ONDERWERP}}</div>
+      <div class="mail-body">{{MAILTEKST}}</div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <h2>Aanpak</h2>
+  <div class="stap"><div class="sn">1</div><div>
+    <h3>{{KOP}}</h3><p>{{TOELICHTING}}</p></div></div>
+</section>
+
+<section>
+  <h2>Open punten</h2>
+  <div class="tabelwrap"><table>
+    <tr><th>Wat ontbreekt</th><th>Waar het vandaan moet komen</th></tr>
+    <tr><td>{{ONTBREEKT}}</td><td>{{BRON}}</td></tr>
+  </table></div>
+</section>
+
+<footer>
+  {{VERANTWOORDING_CREDITS}}<br>
+  Dit bestand bevat persoonsgegevens van contactpersonen. Bewaar het lokaal en deel het niet buiten
+  de organisatie.
+</footer>
+
+</div>
+</body>
+</html>

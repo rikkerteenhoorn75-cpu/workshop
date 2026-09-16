@@ -88,20 +88,66 @@ recent opgerichte of overgenomen entiteit, failliete entiteit, meer geregistreer
 dochters dan zichtbaar. Filterbaar per rol: een CFO krijgt andere vragen dan een
 IT-manager.
 
-**6. Aanpak** — wie benader je eerst en waarom, met welke invalshoek
-(kostenbesparing, groei, continuïteit, verduurzaming), en wat de logische
-tweede stap is.
+**6. Conceptmails** — twee of drie mails, klaar om te versturen na een laatste
+eigen redactieslag. Zie *Mails schrijven* hieronder.
 
-**7. Open punten** — wat je niet weet en waar dat vandaan zou moeten komen. Wees
+**7. Aanpak** — wie benader je eerst en waarom, met welke invalshoek, en wat de
+logische tweede stap is.
+
+**8. Open punten** — wat je niet weet en waar dat vandaan zou moeten komen. Wees
 hier concreet: "geen omzetgegevens in deze bronnen" is bruikbaar, "meer onderzoek
 nodig" niet.
 
+## Mails schrijven
+
+Kies **één invalshoek voor het hele plan** en onderbouw die keuze in één zin.
+Vier smaken: kostenbesparing en bundeling, groei en schaalbaarheid, continuïteit
+en security, verduurzaming. Laat de structuur de keuze maken — bij veel
+vestigingen of een tijdkritisch proces is continuïteit geloofwaardiger dan prijs,
+bij een versnipperd concern juist bundeling.
+
+Elke mail heeft dezelfde vier delen:
+
+1. **Aanhef** met de voornaam.
+2. **Opening**: één waarneming uit de data, geen complimenten en geen inleiding
+   over onszelf. "In het handelsregister zag ik dat …" werkt; "Graag stel ik mij
+   voor" niet.
+3. **Kern**, afgestemd op de rol:
+
+   | Rol | Waar de mail over gaat |
+   |---|---|
+   | beslisser | wat het op groepsniveau oplevert, in één alinea, zonder techniek |
+   | budget | wat het kost en wat er te besparen valt; beheer telt zwaarder dan het abonnement |
+   | beïnvloeder | hoe het technisch werkt en wat het aan beheerlast scheelt |
+   | gebruiker | wat er in het dagelijks werk verandert |
+   | poortwachter | een vraag over het proces, niet over het product |
+
+4. **Afsluiting**: één concrete vraag. Een half uur, een terugbelverzoek, of een
+   vraag naar de route. Geen "ik neem contact op".
+
+Schrijf de mails **verschillend**. Krijgen twee mensen dezelfde tekst met een
+andere naam erboven, dan is het plan mislukt — dat is precies het handwerk dat
+deze skill moet wegnemen.
+
+Ondertekenen met de naam van de accountmanager uit de AM-lijst. Zet er geen
+telefoonnummer of e-mailadres van de ontvanger in; die zijn niet opgehaald.
+
 ## Opleveren
 
-Publiceer het plan als artifact, tenzij de gebruiker om een bestand vraagt; gebruik
-dan de `docx`-skill. Zet **geen** echte namen en functies van contactpersonen in een
-gepubliceerde artifact — dat zijn persoonsgegevens. Lever een plan met Lusha-data
-als lokaal bestand, of laat de namen eruit met een verwijzing naar de app.
+Lever het plan als **HTML-bestand** dat de gebruiker lokaal in zijn browser opent.
+Gebruik `sjabloon.html` uit deze map: neem het over, vul de `{{PLAATSHOUDERS}}` in
+en haal de secties weg waarvoor je geen gegevens hebt. De opmaak staat al in het
+sjabloon — daar hoef je niets aan te veranderen, zodat elk plan er hetzelfde uitziet.
+
+Het sjabloon werkt in licht en donker thema, op telefoonbreedte, en print netjes.
+
+**Publiceer het plan niet als artifact.** Er staan namen en functies van echte
+mensen in en dat zijn persoonsgegevens. Stuur het bestand naar de gebruiker en
+commit het niet naar de repo. Wil iemand toch een deelbare versie, laat dan de
+contactpersonen eruit.
+
+Lever daarnaast dezelfde inhoud als `.md`-bestand, zodat het in een CRM geplakt
+kan worden.
 
 ## Grenzen
 
